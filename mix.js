@@ -1,5 +1,5 @@
 
-(function(global, DOC) {
+(function(global, DOC, undefined) {
 
     var version = '0.1',
         curScriptNode = (function(scripts, node) {
@@ -21,7 +21,6 @@
         baseElement = HEAD.getElementsByTagName('base')[0] || null, 
         reg = /\S+/g,
         regSPACE_SPLIT = /\s*,\s*/g,
-        regComments =  /\/\*(?:[^*]|\*+[^\/*])*\*+\/|\/\/.*/g,//注释正则
         regRequire = /require\s*\(\s*["']([^"']+)["']\s*\)|(?:[^\\]?)(["'])/g,
         now = +new Date,
         _timeout = 3e4,//20秒
@@ -48,14 +47,17 @@
          * @param {Object} callback
          * @param {Object} refURL [http://www.qq.com/]
          */
-        require: function(modules, callback, refURL) {
-            modules = $.isArray(modules) ? modules : modules.split(regSPACE_SPLIT);
-            var module, queue = [];
-            refURL = refURL || PATH;
-            refURL.slice(-1) !== '/' && (refURL += '/');
+        require: function(files, callback, refURL) {
+            files = $.isArray(files) ? files : files.split(regSPACE_SPLIT);
+            var file, queue = [];
+            refURL = refURL || '';
+            if(refURL!==''){
+                refURL.slice(-1) !== '/' && (refURL += '/');
+            }
+            
 
-            while(module = modules.shift()) {                
-                var turl = refURL + module; //url处理
+            while(file = files.shift()) {                
+                var turl = refURL + file; //url处理
 
                 if(!_isFileLoaded(turl)) {
                     queue.push(turl);                    
@@ -79,9 +81,9 @@
          * 命名空间
          * @param {Object} names
          * @param {Object} root
-         * @param {Object} maker
+         * @param {Object} factory
          */
-        namespace: function(names, root, maker) {
+        namespace: function(names, root, factory) {
             root = root || $;
             names = $.isArray(names) ? names : names.split('.');
             var name;
@@ -94,8 +96,12 @@
                 } else {
                     if($.isUndefined(root[name])) {
                         try {
-                            root[name] = maker($);
-                            root[name]['@MAKER'] = 'THEO';//添加命名空间创建者标记
+                            var f = factory($);
+                            if(f){
+                                root[name] = 
+                                root[name]['@MAKER'] = 'THEO';//添加命名空间创建者标记s
+                            }
+                            
                         } catch(e) {
                             log('$.namespace:moduleName:'+name+';msg:'+e.message);                            
                         }
@@ -113,19 +119,44 @@
          */
         define: function(moduleName, needModules, fn) {
             var args = _arrSlice.call(arguments, 0);
-            if(args.length===2){
-                //如果第二个参数是fn，则补充依赖关系
-                _emptyArr.splice(args,1,0,[]);
-            }
-            if($.isFunction(fn)){
-                var source = fn.toSource ? fn.toSource() : fn.toString();
-                source.replace(regComments,'')
-                .replace(regRequire,function(a,b){
-                    args[1].push(b);
-                    return a;
-                });
-            }
-            
+            //参数判断1
+            //2
+            //3
+            switch(args.length) {
+                case 0:
+                    log('$.define: arguments error');  
+                    break;
+                case 1:
+                    $.isObject(moduleName) && $.mix.apply($, args);
+                    return $;
+
+                case 2:  
+                    if(args.length===2){
+                        //如果第二个参数是fn，则补充依赖关系
+                        _emptyArr.splice.call(args,1,0,[]);
+                    }                  
+                case 3:
+                    var currQuote ;
+                    if(fn = args[2],$.isFunction(fn)){
+                        var source = fn.toSource ? fn.toSource() : fn.toString();
+                        source.replace(/^\s*\/\*[\s\S]*?\*\/\s*$/mg, '') // block comments
+                            .replace(/^\s*\/\/.*$/mg, '') // line comments
+                            .replace(regRequire,function(a,b,c){
+                                if (c) {
+                                    currQuote = currQuote == c ? undefined : currQuote;
+                                }
+                                // if we're not inside a quoted string
+                                else if (!currQuote) {
+                                    // console.log(b);
+                                    args[1].push(b);
+                                }
+                                return ''; // uses least RAM/CPU
+                            });
+                    }
+                    new Module(args[0], args[1], args[2]);
+                    return $;
+            } 
+
         },
         /**
          * 判断是否定义过本模块
@@ -139,11 +170,57 @@
     };
     'Function String Object Array Undefined Boolean'.replace(reg,function(t){
         $['is'+t] = function(s){
-            isType(s,t)
+            return isType(s,t)
         }
     })
     window[mixJSName] = $;
+    if(mixJSName!=='MixJS'){
+        window['MixJS'] = $;
+    }
+    /**
+     * 数组循环
+     * @param  {[type]}   arr      [description]
+     * @param  {Function} callback [description]
+     * @param  {[type]}   scope    [description]
+     * @return {[type]}            [description]
+     */
+    var forEach = [].forEach?function(arr, callback, scope){
+        [].forEach.call(arr, callback, scope);
+    }:function(arr, callback, scope) {
+        for (var i = 0, len = arr.length; i < len; i++) {
+            if (i in arr) {
+                callback.call(scope, arr[i], i, arr);
+            }
+        }
+    };
+    /**
+     * 数组去重复
+     * @param  {[type]} arr [description]
+     * @return {[type]}     [description]
+     */
+    function _unique(arr){
+        var back = [],
+          obj = {};
 
+        //将数组对象执行forEach方法，得到去重后的对象o
+        forEach(arr, function(item) {
+          obj[item] = 1
+        })
+
+        //对象以键值数组化
+        if(Object.keys) {
+            back = Object.keys(obj)
+        } else {
+            for(var p in obj) {
+                if(obj.hasOwnProperty(p)) {
+                    back.push(p)
+                }
+            }
+        }
+
+        //返回数组
+        return back
+    }
 
     /**
      * 文件粒度上是否加载过
@@ -153,9 +230,66 @@
         return _filesMap[fileName] === 1;
     }
 
-    function Module(){
+    //依赖性模块加载类
+    function Module(moduleName, needModules, maker) {
+        this.name = moduleName;
+        this.maker = maker;
+        this.ready = false;
 
-    }
+        this.needModules = _unique($.isArray(needModules) ? needModules : needModules.split(regSPACE_SPLIT));
+        
+        var len = this.needModules.length
+        if(!len) {
+            this.getReady();
+        } else {
+            
+            //==>添加@MAKER判断，如果存在并且===THEO则认为已经加载（引入）过了，不再加载
+            while(len--){
+                try{
+                    var tmp = this.needModules[len]
+                    if($[tmp] && $[tmp]['@MAKER']==='THEO'){
+                        this.needModules.splice(len,1);
+                    }
+                }catch(e){
+
+                }
+                this.needModules[len]
+            }
+            if(!this.needModules.length){
+                this.getReady();
+                return;
+            }
+            //<==判断end
+            
+            var t = this,
+                cb = function() {
+                    t.getReady();
+                },
+                q = ModuleQueue.modules[moduleName],
+                queue;
+
+            if(q && q.add) {
+                queue = q.add(cb);
+                $.require(this.needModules, function() {
+                    queue.doit();
+                });
+            } else {
+                $.require(this.needModules, cb);
+            }
+            }
+        }
+
+        // Module.prototype.todoList = {};
+        Module.prototype.getReady = function() {
+            this.ready = true;
+
+            $.namespace(this.name, $, this.maker);
+            this.destroy();
+        }
+        Module.prototype.destroy = function(){
+            this.maker = null;
+            this.needModules.length = 0;
+        }
     
     /**
      * 模块依赖关系定制的队列
@@ -401,7 +535,7 @@
                 // Remove the script to reduce memory leak
                 // 在存在父节点并出于非debug模式下移除node节点
                 if(node.parentNode && !isDebug) {
-                    head.removeChild(node)
+                    HEAD.removeChild(node)
                 }
 
                 // Dereference the node
