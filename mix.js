@@ -8,7 +8,7 @@
             return node;
         })(),
         isDebug = !!curScriptNode.getAttribute('data-debug'),
-        mixJSName = curScriptNode.getAttribute('data-name') || 'mixJS',
+        mixJSName = curScriptNode.getAttribute('data-name') || 'MixJS',
         //获取当前文件父路径
         PATH = (function(node) {
             var url = getScriptAbsoluteSrc(node);
@@ -98,7 +98,7 @@
                         try {
                             var f = factory($);
                             if(f){
-                                root[name] = 
+                                root[name] = f;
                                 root[name]['@MAKER'] = 'THEO';//添加命名空间创建者标记s
                             }
                             
