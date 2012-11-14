@@ -1,0 +1,1 @@
+console.log('a.js file loaded');
