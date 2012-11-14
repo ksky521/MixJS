@@ -57,7 +57,7 @@
     	},
     	/**
     	 * 模块定义
-    	 * @param  {[type]} ids     模块id。支持event.broadcast这样的
+    	 * @param  {[type]} id     模块id。支持event.broadcast这样的
     	 * @param  {[type]} deps    依赖关系
     	 * @param  {[type]} maker   模块制造工厂函数，return出来的才是真正的module
     	 * @return {[type]}         this
@@ -89,9 +89,29 @@
             return isType(s,t)
         }
     });
-    function Module(){
 
+    function Module(id,deps,maker,root){
+        id = id.replace('/','.');//event/bindEvent => event.bindEvent;
+        this.id = id;
+        this.deps = deps;
+        this.maker = maker;
+        this.root = root || $;
     }
+
+    Module.prototype.namespace = function(){
+
+        try{
+            var f = $.isFunction(this.maker) && this.maker(this.root);
+            if(f){
+                this.root[this.id] = f;
+                f['@GOD'] = 'THEO';
+            }
+            
+        }catch(e){
+            throw new Error('Module.namespace:id=>'+this.id+',info=>'+e.message);
+        }
+    }
+    Module.defined = {};//定义过的模块打标示符
     Module.cache = {};//Module实例缓存
     Module.state = {};//模块的状态
 
