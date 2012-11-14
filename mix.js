@@ -155,7 +155,7 @@
                     }
                     new Module(args[0], args[1], args[2]);
                     return $;
-            } 
+            }
 
         },
         /**
@@ -237,7 +237,7 @@
         this.ready = false;
 
         this.needModules = _unique($.isArray(needModules) ? needModules : needModules.split(regSPACE_SPLIT));
-        
+
         var len = this.needModules.length
         if(!len) {
             this.getReady();
