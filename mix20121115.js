@@ -42,9 +42,6 @@
         path: PATH,
         head: HEAD,
         reg: reg,
-        log:function(){
-            console && console.log && console.log.call(console,arguments);
-        },
         emptyFn: _emptyFn,
         mix: mix,
         each: each,
@@ -68,53 +65,45 @@
                 return this;
             }
 
-            var q = ids._q,cb;
-            if(q && q['@GOD'] === 'THEOQ'){
+            var cb,tq;
+            if(ids._q && ids._q['@GOD'] === 'THEOQ'){
+                tq = ids._q;//取出q
+
                 cb = function(){
-                    var name = q._qname;
-                    q.unshift(callback);
-                    // callback();            
-                    // q.shift();
+                    callback();
+                    tq.shift();  
                 }
-                // q.unshift(callback);//插队
             }else{
-                ids = String(ids).split(',');  
+                ids = String(ids).split(',');                
                 cb = callback;
             }
-            var tq = new Queue;
-            tq.addSteps(ids.length).push(cb);
-            
-            each(ids, function(v, i) {
-                if(v!==''){
-                    var arr = getPath(v),
-                        url = arr[0],
-                        ext = arr[1];
-                        
-                    if(_requireFileMap[url]) {                 
-                        tq.shift();
-                        $.log(url,'=====> isLoaded', tq.getLength());
-                    } else {
 
-                        var tcb = function() {
-                                _requireFileMap[url] = 3;//加载成功
-                                $.log(url,'=====--------> loaded callback fire', tq.getLength());
-                                tq.shift();
-                                $.log(url,'=====--------> loaded callback fired   --', tq.getLength());
-                            };
-                       
-                        _requireFileMap[url] = 1;//开始加载之前，beforeSend
-                        if(ext === 'js') {
-                            loadJS(url, tcb);
-                        } else {
-                            loadCSS(url, tcb);
-                        }
-                        _requireFileMap[url] = 2;//正在发送请求
-                        $.log(url,'=====> loading',tq.getLength());
+            var q = new Queue;//新Queue
+            q.addSteps(ids.length).push(cb);
+
+            each(ids, function(v, i) {
+                var arr = getPath(v),
+                    url = arr[0],
+                    ext = arr[1];
+                    
+                if(_requireFileMap[url]) {                 
+                    q.shift();
+                } else {
+
+                    var tcb = function() {  
+                            _requireFileMap[url] = 3;//加载成功
+                            q.shift();                                                                            
+                        };
+                   
+                    _requireFileMap[url] = 1;//开始加载之前，beforeSend
+                    if(ext === 'js') {
+                        loadJS(url, tcb);
+                    } else {
+                        loadCSS(url, tcb);
                     }
-                }else{
-                    tq.shift();
+                    _requireFileMap[url] = 2;//正在发送请求
+
                 }
-                
             }, this);
             //获取完整路径→加载js|css
             //取完整路径：判断是否是完整路径→不是，添加rooturl→最后格式化url            
@@ -169,7 +158,7 @@
     function Module(id, deps, maker, root) {
         id = id.replace('/', '.'); //event/bindEvent => event.bindEvent;
         this.id = id;
-        console.log('依赖关系',deps._q);
+
         this.deps = String(deps).split(',');//必须是数组
         this.maker = maker;
         this.root = root || $;
@@ -198,27 +187,19 @@
         
     }
     Module.prototype.load = function(){
-        var deps = this.deps,t = [];
-        each(this.deps,function(v){
-            v!=='' && t.push(v/*.replace('.','/')*/);
-        });
-        this.deps = deps = t;
-        
+        var deps = this.deps;
         var q = new Queue;
         //设置步长，订阅消息：命名空间和销毁
-        q.addSteps(1).push(this.destroy,[],this)
-            .push(this.namespace,[],this);
+        q.addSteps(1)
+            .push(this.namespace,[],this)
+            .push(this.destroy,[],this);
 
         deps._q = this.queue = q;
         deps._qname = this.id;
-        
-        if(deps.length===0){
+
+        $.require(deps,function(){
             q.shift();
-        }else{
-            $.require(deps,function(){
-                q.shift();
-            });
-        }
+        });
 
         return this;
     }
@@ -246,7 +227,7 @@
         return false;
     }
     Module.prototype.namespace = function() {
-        $.log('namespace===>',this.id);
+        console.log('namespace===>',this.id);
         var names = this.id.split('.'),
             root = this.root;
         var name;
@@ -262,7 +243,7 @@
                         if(f) {
                             f['@GOD'] = 'THEO';
                             root[name] = f;
-                            // q.shift();
+
                         }
                     } catch(e) {
                         throw new Error('Module.namespace:id=>' + this.id + ',info=>' + e.message);
@@ -341,7 +322,6 @@
     function Queue() {
         this.listeners = [];
         this.waitArr = [];
-        // this.fired = false;
         this['@GOD'] = 'THEOQ';//添加唯一标示
     }
     Queue.prototype.getLength = function() {
@@ -354,24 +334,13 @@
     //一次性压入n个步骤
     Queue.prototype.addSteps = function(n) {
         n |= 0;
-        console.log('addSteps--->start',n,this.getLength());
-        // if(n !== 0) this.waitArr = this.waitArr.concat(new Array(n));
-        if(n !== 0) this.waitArr.length += n;
-        console.log('addSteps--->end',n,this.getLength());
+        if(n !== 0) this.waitArr = this.waitArr.concat(new Array(n));
         return this;
     }
-
     //出栈
     Queue.prototype.shift = function() {
-        if(this.waitArr.length===0){
-            return this;
-        }
-
         this.waitArr.shift();
-        $.log('shift---->',this.getLength());
         if(this.getLength() === 0) {
-            
-            $.log('I am queue fire listeners length--------->',this.listeners.length);
             //符合fire条件，开始爆发
             this.fire();
         }
@@ -387,10 +356,8 @@
             var fn = v.fn,
                 args = v.args,
                 scope = v.scope;
-            console.log('i am fire callback',fn);
             fn.apply(scope, args);
         }, this);
-
         this.destroy(); //销毁
         return this;
     }
@@ -402,7 +369,17 @@
      * @return {[type]}            [description]
      */
     Queue.prototype.push = function(callback, args, scope) {
-        return this._add(callback,args,scope,'unshift');
+        if($.isFunction(callback)) {
+            args = args || _emptyArr;
+            scope = scope || global;
+            this.listeners.push({
+                fn: callback,
+                args: args,
+                scope: scope
+            });
+        }
+
+        return this;
     }
     /**
      * 从顶部压入队列
@@ -412,22 +389,10 @@
      * @return {[type]}            [description]
      */
     Queue.prototype.unshift = function(callback, args, scope){
-        
-
-        return this._add(callback,args,scope,'unshift');
-    }
-    /**
-     * 从顶部压入队列
-     * @param  {Function} callback [description]
-     * @param  {[type]}   args     [description]
-     * @param  {[type]}   scope    [description]
-     * @return {[type]}            [description]
-     */
-    Queue.prototype._add = function(callback, args, scope, type){
         if($.isFunction(callback)) {
             args = args || _emptyArr;
             scope = scope || global;
-            this.listeners[type]({
+            this.listeners.unshift({
                 fn: callback,
                 args: args,
                 scope: scope
@@ -655,5 +620,122 @@
         }
         return target;
     }
+
+
+/**
+ * 目标: 为了尽可能的减少模块之间业务逻辑的耦合度, 而开发了这个eventbus, 主要用于业务逻辑的事件传递
+ * 使用规范: 每个js模块尽可能通过事件去通信, 减少模块之间的直接调用和依赖(耦合)
+    
+ * @return {[type]} 
+ * @author  theowang
+ * $Id: broadcast.js 65871 2012-11-05 01:51:42Z theowang $
+ */
+$.broadcast = function($){
+    var _cache = {};
+    var broadcast = {
+        
+        /**
+         * 派发         
+         * @param  {[type]} type 事件类型
+         * @param  {[type]} data 回调数据
+         * @return {[type]}      [description]
+         */
+        fire:function(type, data){
+            var listeners = _cache[type],len = 0;
+            if(!$.isUndefined(listeners)){
+                var args = _arrSlice.call(arguments,0);
+                args = args.length > 2 ? args.splice(2, args.length-1) : [];
+                args = [data].concat(args);
+
+                len = listeners.length;
+                for(var i = 0; i<len;i++){
+                    var listener = listeners[i];
+                    if(listener && listener.callback) {
+                        args = args.concat(listener.args);
+                        listener.callback.apply(listener.scope, args);
+                    }
+                }
+            }
+            return this;
+        },
+        /**
+         * 订阅广播事件
+         * @param  {[type]}   types     事件类型，支持,分隔符
+         * @param  {Function} callback 回调函数
+         * @param  {[type]}   scope    回调函数上下文
+         * @return {[type]}            this
+         */
+        subscribe:function(types, callback, scope){
+            types = types || [];
+            var args = _arrSlice.call(arguments,0);
+
+            if($.isString(types)){
+                types = types.split(',');
+            }
+            var len = types.length;
+            if(len===0){
+                return this;
+            }
+            args = args.length > 3 ? args.splice(3, args.length-1) : [];
+            for(var i = 0;i<len;i++){
+                var type = types[i];
+                _cache[type] = _cache[type] || [];
+                _cache[type].push({callback:callback,scope:scope,args:args});
+            }
+            return this;
+        },
+        /**
+         * 退订
+         * @param  {[type]}   type     [description]
+         * @param  {Function} callback 假如传入则移出传入的监控事件，否则移出全部
+         * @return {[type]}            [description]
+         */
+        unsubscribe:function(type, callback, scope){
+            var listeners = _cache[type];
+            if (!listeners) {
+                return this;
+            }
+            if(callback){
+                var len = listeners.length,
+                    tmp = [];
+                
+                for(var i=0; i<len; i++) {
+                    var listener = listeners[i];
+                    if(listener.callback == callback && listener.scope == scope) {
+                    } else {
+                        tmp.push(listener);
+                    }
+                }
+                listeners = tmp;
+            }else{
+                listeners.length = 0;
+            }
+            return this;
+        },
+        /**
+         * 订阅别名
+         * @return {[type]} [description]
+         */
+        on:function(){
+            return this.subscribe.apply(this,arguments);
+        },
+        /**
+         * 退订别名
+         * @return {[type]} [description]
+         */
+        un:function(){
+            return this.unsubscribe.apply(this,arguments);
+        },
+        dispatch:function(){
+            return this.fire.apply(this,arguments);
+        },
+        
+        removeAll:function(){
+            _cache = {};
+            return this;
+        }
+    };
+    return broadcast;
+}($);
 
 }(window, document, undefined));
