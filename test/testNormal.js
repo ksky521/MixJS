@@ -1,5 +1,8 @@
 MixJS.define('testNormal',['a','b','c.css'],function($){
+    console.log('testNormal==> executing');
     return function(){
-        console.log('testNormal==>',$.testNormal);
+        alert(1);
+        console.log('testNormal==>maked');
     }
+
 })
