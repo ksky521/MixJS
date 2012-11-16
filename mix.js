@@ -22,13 +22,31 @@
         UA = navigator.userAgent,
         isWebKit = ~UA.indexOf('AppleWebKit'),
         now = +new Date,
+        
         reg = /[^, ]+/g,
         _timeout = 3e4,//30秒超时
         _requireFileMap = {},//require hashmap,1--->发送请求之前，2--->正在加载，3-->加载成功
         _cleanObj = {},
         _emptyArr = [],
         _emptyFn = function() {},
-        _arrSlice = _emptyArr.slice;
+        _arrSlice = _emptyArr.slice,
+        /**
+         * 数组遍历
+         * @param  {[type]}   arr      [description]
+         * @param  {Function} callback [description] arrvalue index arr
+         * @param  {[type]}   scope    [description]
+         * @return {[type]}            [description]
+         */
+        each = [].forEach ?
+        function(arr, callback, scope) {
+            [].forEach.call(arr, callback, scope);
+        } : function(arr, callback, scope) {
+            for(var i = 0, len = arr.length; i < len; i++) {
+                if(i in arr) {
+                    callback.call(scope, arr[i], i, arr);
+                }
+            }
+        };
     var config = {
         alias:ALIAS,
         path:PATH,
@@ -43,11 +61,11 @@
         head: HEAD,
         reg: reg,
         log:function(){
-            console && console.log && console.log.call(console,arguments);
+            console && console.log && console.log.apply(console,arguments);
         },
         emptyFn: _emptyFn,
         mix: mix,
-        each: each,
+        each:each,
         load: load,
         loadJS: loadJS,
         loadCSS: loadCSS,
@@ -67,57 +85,51 @@
             if($.isUndefined(ids)){
                 return this;
             }
-
-            var q = ids._q,cb;
-            if(q && q['@GOD'] === 'THEOQ'){
+            var q = ids._q, cb;
+            if(q && q['@GOD']==='THEO'){
+                q.add(callback);
                 cb = function(){
-                    var name = q._qname;
-                    q.unshift(callback);
-                    // callback();            
-                    // q.shift();
+                    q.fire();
                 }
-                // q.unshift(callback);//插队
             }else{
-                ids = String(ids).split(',');  
-                cb = callback;
+                ids = String(ids).split(',');
+                cb = function(){
+                    var file = queue.shift();
+                    _requireFileMap[file] = 3;
+
+                    if(file && queue.length === 0) {
+                        callback && $.isFunction(callback) && callback();
+                    }
+                }
             }
-            var tq = new Queue;
-            tq.addSteps(ids.length).push(cb);
             
+            var queue = [];
+
             each(ids, function(v, i) {
                 if(v!==''){
                     var arr = getPath(v),
                         url = arr[0],
                         ext = arr[1];
+                    
+                    if(!_requireFileMap[url]) {                 
                         
-                    if(_requireFileMap[url]) {                 
-                        tq.shift();
-                        $.log(url,'=====> isLoaded', tq.getLength());
-                    } else {
-
-                        var tcb = function() {
-                                _requireFileMap[url] = 3;//加载成功
-                                $.log(url,'=====--------> loaded callback fire', tq.getLength());
-                                tq.shift();
-                                $.log(url,'=====--------> loaded callback fired   --', tq.getLength());
-                            };
-                       
+                        queue.push(url);
+                                         
                         _requireFileMap[url] = 1;//开始加载之前，beforeSend
                         if(ext === 'js') {
-                            loadJS(url, tcb);
+                            loadJS(url, cb);
                         } else {
-                            loadCSS(url, tcb);
+                            loadCSS(url, cb);
                         }
                         _requireFileMap[url] = 2;//正在发送请求
-                        $.log(url,'=====> loading',tq.getLength());
+                        $.log(url,'=====> loading');
                     }
-                }else{
-                    tq.shift();
                 }
                 
             }, this);
             //获取完整路径→加载js|css
             //取完整路径：判断是否是完整路径→不是，添加rooturl→最后格式化url            
+            
 
             return this;
         },
@@ -169,7 +181,6 @@
     function Module(id, deps, maker, root) {
         id = id.replace('/', '.'); //event/bindEvent => event.bindEvent;
         this.id = id;
-        console.log('依赖关系',deps._q);
         this.deps = String(deps).split(',');//必须是数组
         this.maker = maker;
         this.root = root || $;
@@ -204,19 +215,18 @@
         });
         this.deps = deps = t;
         
-        var q = new Queue;
+        var q = new Queue(this.id);
         //设置步长，订阅消息：命名空间和销毁
-        q.addSteps(1).push(this.destroy,[],this)
-            .push(this.namespace,[],this);
-
-        deps._q = this.queue = q;
-        deps._qname = this.id;
+        q.add(this.namespace,[],this);
         
+        ids._q = q;
+                
         if(deps.length===0){
-            q.shift();
+            q.fire();
         }else{
+
             $.require(deps,function(){
-                q.shift();
+                q.fire();
             });
         }
 
@@ -270,6 +280,7 @@
                 }
             }
         }
+        this.destroy();
     }
     Module._cache = {}; //缓存
     // Module._queue = {};//队列实例
@@ -338,109 +349,53 @@
     console.log(new Date-now);
      * 
      */
-    function Queue() {
-        this.listeners = [];
-        this.waitArr = [];
-        // this.fired = false;
-        this['@GOD'] = 'THEOQ';//添加唯一标示
+    function Queue(moduleName) {
+        this.moduleName = moduleName;
+        this.taskList = [];
+        this['@GOD'] = 'THEO';
     }
-    Queue.prototype.getLength = function() {
-        return this.waitArr.length;
-    }
-    //压入栈
-    Queue.prototype.addStep = function(i) {
-        return this.waitArr.push(i);
-    }
-    //一次性压入n个步骤
-    Queue.prototype.addSteps = function(n) {
-        n |= 0;
-        console.log('addSteps--->start',n,this.getLength());
-        // if(n !== 0) this.waitArr = this.waitArr.concat(new Array(n));
-        if(n !== 0) this.waitArr.length += n;
-        console.log('addSteps--->end',n,this.getLength());
-        return this;
-    }
+    Queue.modules = {};
 
-    //出栈
-    Queue.prototype.shift = function() {
-        if(this.waitArr.length===0){
+    Queue.prototype.push = function(fn, args, scope) {
+        return this._add(fn, args, scope, 'unshift');
+    }
+    Queue.prototype.unshift = function(fn, args, scope){
+        
+        return this._add(fn, args, scope, 'unshift');
+    }
+    Queue.prototype._add = function(fn, args, scope, type){
+        if(!type){
             return this;
         }
 
-        this.waitArr.shift();
-        $.log('shift---->',this.getLength());
-        if(this.getLength() === 0) {
-            
-            $.log('I am queue fire listeners length--------->',this.listeners.length);
-            //符合fire条件，开始爆发
-            this.fire();
+        args = _arrSlice.call(arguments, 0, -1);
+        if(args.length === 0) {
+            return this;
         }
+        this.taskList[type](args);
         return this;
     }
-
-    /**
-     * 触发事件
-     * @return {[type]} [description]
-     */
     Queue.prototype.fire = function() {
-        each(this.listeners, function(v, i) {
-            var fn = v.fn,
-                args = v.args,
-                scope = v.scope;
-            console.log('i am fire callback',fn);
-            fn.apply(scope, args);
-        }, this);
+        if(this._canIDo()) {
+            var fn = this.taskList.pop();
+            var args = $.isArray(fn[1]) ? fn[1] : _emptyFn,
+                scope = fn[2] || null;
+            fn = fn[0];
 
-        this.destroy(); //销毁
-        return this;
-    }
-    /**
-     * 从底部压入队列
-     * @param  {Function} callback 订阅函数
-     * @param  {[type]}   args     函数参数
-     * @param  {[type]}   scope    函数上下文
-     * @return {[type]}            [description]
-     */
-    Queue.prototype.push = function(callback, args, scope) {
-        return this._add(callback,args,scope,'unshift');
-    }
-    /**
-     * 从顶部压入队列
-     * @param  {Function} callback [description]
-     * @param  {[type]}   args     [description]
-     * @param  {[type]}   scope    [description]
-     * @return {[type]}            [description]
-     */
-    Queue.prototype.unshift = function(callback, args, scope){
-        
-
-        return this._add(callback,args,scope,'unshift');
-    }
-    /**
-     * 从顶部压入队列
-     * @param  {Function} callback [description]
-     * @param  {[type]}   args     [description]
-     * @param  {[type]}   scope    [description]
-     * @return {[type]}            [description]
-     */
-    Queue.prototype._add = function(callback, args, scope, type){
-        if($.isFunction(callback)) {
-            args = args || _emptyArr;
-            scope = scope || global;
-            this.listeners[type]({
-                fn: callback,
-                args: args,
-                scope: scope
-            });
+            $.isFunction(fn) && fn.apply(scope, args);
+            this.clear();
         }
-
         return this;
     }
-    //销毁
-    Queue.prototype.destroy = function() {
-        this.listeners.length = 0;
-        this.waitArr.length = 0;
+    Queue.prototype.clear = function() {
+        if(!this._canIDo()) {
+            delete Queue.modules[this.moduleName];
+        }
     }
+    Queue.prototype._canIDo = function() {
+        return this.taskList.length !== 0;
+    }
+    
 
     /**
      * 加载js，css文件通用方法
@@ -594,23 +549,7 @@
             }
         }, 1)
     }
-    /**
-     * 数组遍历
-     * @param  {[type]}   arr      [description]
-     * @param  {Function} callback [description] arrvalue index arr
-     * @param  {[type]}   scope    [description]
-     * @return {[type]}            [description]
-     */
-    var each = [].forEach ?
-    function(arr, callback, scope) {
-        [].forEach.call(arr, callback, scope);
-    } : function(arr, callback, scope) {
-        for(var i = 0, len = arr.length; i < len; i++) {
-            if(i in arr) {
-                callback.call(scope, arr[i], i, arr);
-            }
-        }
-    };
+   
     /**
      * 获取类型
      * @param  {[type]} obj 要判断的对象

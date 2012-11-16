@@ -1,6 +1,6 @@
-MixJS.define('testLazy',['b','c.css','testNormal'],function($){
+MixJS.define('testLazy',['b'/*,'c.css','testNormal'*/],function($){
     console.log('testLazy ==>executing');
-    $.testNormal();
+    // $.testNormal();
     return function(){
         // $.require('a',function(){
         //     console.log('lazy require callback fire!');
