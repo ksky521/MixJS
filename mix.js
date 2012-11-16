@@ -85,22 +85,17 @@
             if($.isUndefined(ids)){
                 return this;
             }
-            var q = ids._q, cb;
+            var q = ids._q, tcb,jsQueue,parentModule;
             if(q && q['@GOD']==='THEO'){
-                q.add(callback);
-                cb = function(){
+                q.push(cb);
+                parentModule = ids._qname;
+                jsQueue = q;
+                tcb = function(){
                     q.fire();
                 }
             }else{
                 ids = String(ids).split(',');
-                cb = function(){
-                    var file = queue.shift();
-                    _requireFileMap[file] = 3;
-
-                    if(file && queue.length === 0) {
-                        callback && $.isFunction(callback) && callback();
-                    }
-                }
+                tcb = cb;
             }
             
             var queue = [];
@@ -111,15 +106,37 @@
                         url = arr[0],
                         ext = arr[1];
                     
-                    if(!_requireFileMap[url]) {                 
+                    if(!_requireFileMap[url]) {             
                         
                         queue.push(url);
                                          
                         _requireFileMap[url] = 1;//开始加载之前，beforeSend
                         if(ext === 'js') {
-                            loadJS(url, cb);
+                            v = v.replace('/','.');
+
+                            if(jsQueue){
+                                Module._depsMap[v] = parentModule;
+                                var tt = Module._cache[parentModule] = jsQueue;
+                                console.log('add _cache',v);
+                                if(!Module._needModule[parentModule]){
+                                    Module._needModule[parentModule] = [];
+                                }
+                                Module._needModule[parentModule].push(v);
+                                
+                            }else{
+                                Module._depsMap[v] = v;
+                                var tt = Module._cache[v] = new Queue(v);
+
+                                tt.push(tcb);
+                            }
+
+                            loadJS(url, function(t){
+                                console.log('tt.fire',tt);
+                                tt.fire();
+                            });
+                            $.log(url,'js loading');
                         } else {
-                            loadCSS(url, cb);
+                            loadCSS(url, tcb);
                         }
                         _requireFileMap[url] = 2;//正在发送请求
                         $.log(url,'=====> loading');
@@ -130,7 +147,16 @@
             //获取完整路径→加载js|css
             //取完整路径：判断是否是完整路径→不是，添加rooturl→最后格式化url            
             
+            function cb(){
 
+                    var file = queue.shift();
+                    console.log(file,'++++++++++++++++>loaded');
+                    _requireFileMap[file] = 3;
+
+                    if(file && queue.length === 0) {
+                        callback && $.isFunction(callback) && callback();
+                    }
+                }
             return this;
         },
         /**
@@ -155,7 +181,7 @@
                 _emptyArr.splice.call(args, 1, 0, []);
             case 3:
                 //args[1] = ;
-                new Module(args[0], args[1], args[2]).load();
+                Module._modules[args[0]] = new Module(args[0], args[1], args[2]).load();
                 break;
             }
             return this;
@@ -215,12 +241,20 @@
         });
         this.deps = deps = t;
         
-        var q = new Queue(this.id);
+        var q = Module._cache[Module._depsMap[this.id]];
+
+        if(!q){
+            q = new Queue(this.id);
+            console.log('new queue',this.id);
+        }else{
+            console.log('shift _cache',Module._depsMap[this.id]);
+        }
+        // var q = new Queue(this.id);
         //设置步长，订阅消息：命名空间和销毁
-        q.add(this.namespace,[],this);
+        q.push(this.namespace,[],this);
         
-        ids._q = q;
-                
+        deps._q = q;
+        deps._qname = this.id;    
         if(deps.length===0){
             q.fire();
         }else{
@@ -257,6 +291,11 @@
     }
     Module.prototype.namespace = function() {
         $.log('namespace===>',this.id);
+        if(Module._needModule[this.id] && Module._needModule[this.id].length!==0){
+            $.log('namespage====',this.id,'不符合ready要求',Module._needModule[this.id]);
+            return;
+        }
+
         var names = this.id.split('.'),
             root = this.root;
         var name;
@@ -266,6 +305,7 @@
                 root = root[name] || {};
             }else{
                 if($.isUndefined(root[name])){
+
                     try {
                         var f = $.isFunction(this.maker) && this.maker(this.root);
                         // console.log(f);
@@ -280,9 +320,27 @@
                 }
             }
         }
+        var parentModule;
+        if(parentModule = Module._depsMap[this.id]){
+            //告诉老大，我准备好了
+            
+            var parentModuleNeedArr = Module._needModule[parentModule];
+            
+            for(var i = 0,len = parentModuleNeedArr.length;i<len;i++){
+                if(parentModuleNeedArr[i] === this.id){
+                    parentModuleNeedArr.splice(i,1);
+                    console.log('我准备好了,互叫上级');
+                    Module._modules[parentModule].namespace();
+                    break;
+                }
+            }
+        }
         this.destroy();
     }
     Module._cache = {}; //缓存
+    Module._depsMap = {};//
+    Module._needModule = {};
+    Module._modules = {};//Module实例
     // Module._queue = {};//队列实例
 
     var regAlias = /^[-a-z0-9_$]{2,}$/i,//别名正则
@@ -357,7 +415,7 @@
     Queue.modules = {};
 
     Queue.prototype.push = function(fn, args, scope) {
-        return this._add(fn, args, scope, 'unshift');
+        return this._add(fn, args, scope, 'push');
     }
     Queue.prototype.unshift = function(fn, args, scope){
         
@@ -372,12 +430,15 @@
         if(args.length === 0) {
             return this;
         }
+
         this.taskList[type](args);
+        console.log('queue lengther',type,this.taskList.length,args)
         return this;
     }
     Queue.prototype.fire = function() {
         if(this._canIDo()) {
             var fn = this.taskList.pop();
+            console.log(fn[0],this.taskList.length);
             var args = $.isArray(fn[1]) ? fn[1] : _emptyFn,
                 scope = fn[2] || null;
             fn = fn[0];
@@ -388,7 +449,9 @@
         return this;
     }
     Queue.prototype.clear = function() {
+        
         if(!this._canIDo()) {
+            console.log('queue clear');
             delete Queue.modules[this.moduleName];
         }
     }

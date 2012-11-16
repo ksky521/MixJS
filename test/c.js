@@ -1,1 +1,6 @@
-console.log('c.js file loaded');
+MixJS.define('c',function(){
+	console.log('c is loaded');
+	return function(){
+
+	}
+})
