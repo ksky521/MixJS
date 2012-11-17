@@ -7,7 +7,7 @@ MixJS.define('testLazy',['b','c.css','testNormal'],function($){
         // });
         
         
-        $.log('testLazy==>',$.testLazy);
+        $.log('testLazy==>'+$.testLazy);
     }
 })
 .define('testLazy2',['b','a'],function(){

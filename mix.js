@@ -106,7 +106,7 @@
                     if(parentModule){
                         Module._depsMap[url] = parentModule;
                         
-                        $.log('add 依赖关系表:'+url);
+                        $.log('发现&添加【依赖关系表】:'+url);
                         if(!Module._needModule[parentModule]){
                             Module._needModule[parentModule] = [];
                         }
