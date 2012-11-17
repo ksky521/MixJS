@@ -5,10 +5,11 @@
             node = scripts[scripts.length - 1]; //FF下可以使用DOC.currentScript
             return node;
         })(),
-        isDebug = !!curScriptNode.getAttribute('debug'),
+        isDebug = !! curScriptNode.getAttribute('debug'),
         MixJSName = curScriptNode.getAttribute('name') || 'MixJS',
         CHARSET = curScriptNode.getAttribute('charset') || 'utf-8',
-        ALIAS = {},//alias别名快速定位
+        ALIAS = {},
+        //alias别名快速定位
         //获取当前文件父路径
         PATH = (function(node) {
             var url = node.hasAttribute ? // non-IE6/7
@@ -22,11 +23,13 @@
         UA = navigator.userAgent,
         isWebKit = ~UA.indexOf('AppleWebKit'),
         now = +new Date,
-        
+
         reg = /[^, ]+/g,
 
-        _timeout = 3e4,//30秒超时
-        _requireFileMap = {},//require hashmap,1--->发送请求之前，2--->正在加载，3-->加载成功
+        _timeout = 3e4,
+        //30秒超时
+        _requireFileMap = {},
+        //require hashmap,1--->发送请求之前，2--->正在加载，3-->加载成功
         _cleanObj = {},
         _emptyArr = [],
         _emptyFn = function() {},
@@ -39,21 +42,21 @@
          * @return {[type]}            [description]
          */
         each = [].forEach ?
-        function(arr, callback, scope) {
-            [].forEach.call(arr, callback, scope);
-        } : function(arr, callback, scope) {
-            for(var i = 0, len = arr.length; i < len; i++) {
-                if(i in arr) {
-                    callback.call(scope, arr[i], i, arr);
-                }
+    function(arr, callback, scope) {
+        [].forEach.call(arr, callback, scope);
+    } : function(arr, callback, scope) {
+        for(var i = 0, len = arr.length; i < len; i++) {
+            if(i in arr) {
+                callback.call(scope, arr[i], i, arr);
             }
-        };
+        }
+    };
     var config = {
         alias: ALIAS,
         path: PATH,
         timeout: _timeout,
-        preload: _emptyFn,//首先要加载的基础库~
-        debugLevel: isDebug ? 7 : 8,//debug级别，用法详见log方法
+        debugLevel: isDebug ? 7 : 8,
+        //debug级别，用法详见log方法
         debug: isDebug,
         charset: CHARSET
     }
@@ -63,31 +66,23 @@
         now: now,
         path: PATH,
         head: HEAD,
-        reg: reg,        
+        reg: reg,
         log: log,
         emptyFn: _emptyFn,
         mix: mix,
-        each:each,
+        each: each,
         load: load,
         loadJS: loadJS,
         loadCSS: loadCSS,
-        defined:Module.defined,
+        defined: Module.defined,
         config: function(cfg) {
-            config = mix(config,cfg);
+            config = mix(config, cfg);
         },
-        use: function(ids, callback){
-            var preload = config.preload;
-             if(preload.length) {
-                 require(ids, function() {
-                     config.preload = _emptyArr;
-                     require(ids, callback)
-                 })
-             } else {
-                 require(ids, callback)
-             }
-             return this;
+        use: function(ids, callback) {
+            require(ids, callback)
+            return this;
         },
-        
+
         /**
          * 模块定义
          * @param  {[type]} id     模块id。支持event.broadcast这样的
@@ -124,7 +119,7 @@
     });
     //释放到window
     global[MixJSName] = $;
-    MixJSName!=='MixJS' && (global['MixJS'] = $);
+    MixJSName !== 'MixJS' && (global['MixJS'] = $);
     /**
      * 模块类
      * @param {[type]} id    模块名称
@@ -132,25 +127,26 @@
      * @param {[type]} maker 制造函数
      * @param {[type]} root  父模块，默认是MixJS
      */
+
     function Module(id, deps, maker, root) {
         id = id.replace('/', '.'); //event/bindEvent => event.bindEvent;
         this.id = id;
-        this.deps = String(deps).split(',');//必须是数组
+        this.deps = String(deps).split(','); //必须是数组
         this.maker = maker;
         this.root = root || $;
         this.queue = null;
         this.init();
     }
     //销毁
-    Module.prototype.destroy = function(){
-        $.log('Module.destroy '+ this.id+' destroy');
+    Module.prototype.destroy = function() {
+        $.log('Module.destroy ' + this.id + ' destroy');
         delete this.maker;
         this.deps.length = 0;
         delete this.deps;
         delete this.root;
-        try{
+        try {
             this.queue.destroy();
-        }catch(e){}
+        } catch(e) {}
 
         delete this.queue;
 
@@ -160,33 +156,33 @@
         //     delete q;
         // }catch(e){
         // }
-        
         delete this.id;
-        
+
     }
-    Module.prototype.init = function(){
-        if(Module.defined(this.id,this.root)){
+    Module.prototype.init = function() {
+        if(Module.defined(this.id, this.root)) {
             //已经定义过的
             return this;
         }
-        var deps = this.deps,t = [];
-        each(this.deps,function(v){
-            v!=='' && t.push(v/*.replace('.','/')*/);
+        var deps = this.deps,
+            t = [];
+        each(this.deps, function(v) {
+            v !== '' && t.push(v /*.replace('.','/')*/ );
         });
         this.deps = deps = t;
-        
-        
+
+
         // var q = new Queue(this.id);
         //设置步长，订阅消息：命名空间和销毁
-        moduleQueue.push(this.namespace,[],this);
-        console.log('Module.init:['+this.id+']add to Queue');
+        moduleQueue.push(this.namespace, [], this);
+        $.log('Module.init:[' + this.id + ']add to Queue');
 
-        deps._qname = this.id;    
-        if(deps.length===0){
+        deps._qname = this.id;
+        if(deps.length === 0) {
             moduleQueue.fire();
-        }else{
+        } else {
 
-            require(deps,function(){
+            require(deps, function() {
                 moduleQueue.fire();
             });
         }
@@ -200,56 +196,58 @@
      * @param  {[type]} root [description]
      * @return {[type]}      [description]
      */
-    Module.defined = function(id,root){
+    Module.defined = function(id, root) {
         root = root || $;
 
-        var names = id.split('.'), name;
-        while(name = names.shift()){
-            if(names.length){
-                if(!root[name]){
+        var names = id.split('.'),
+            name;
+        while(name = names.shift()) {
+            if(names.length) {
+                if(!root[name]) {
                     return false;
                 }
                 // console.log(name);
                 root = root[name];
-            }else{
+            } else {
 
                 return !$.isUndefined(root[name]) && root[name]['@GOD'] === 'THEO';
-            }            
+            }
         }
         return false;
     }
 
     Module.prototype.namespace = function() {
-        $.log('namespace===>'+this.id);
-        if(!this.id){
+        $.log('namespace===>' + this.id);
+        if(!this.id) {
             return;
         }
         var needModules = Module._needModule[this.id];
 
-        var selfFn = arguments.callee,self = this;
-        if($.isArray(needModules)){
-            for(var i =0,len = needModules.length;i<len;i++){
+        var selfFn = arguments.callee,
+            self = this;
+        if($.isArray(needModules)) {
+            for(var i = 0, len = needModules.length; i < len; i++) {
                 var file = _requireFileMap[needModules[i]];
-                $.log('----'+this.id+'---->'+needModules[i]+';'+file);
-                if(file !== 3){
+                $.log('----' + this.id + '---->' + needModules[i] + ';' + file);
+                if(file !== 3) {
                     $.log('namespage====' + this.id + '不符合ready要求');
                     //重新压入栈
-                    moduleQueue.push(selfFn,[],self);
+                    moduleQueue.push(selfFn, [], self);
                     return;
                 }
-            }           
+            }
         }
 
         var names = this.id.split('.'),
             root = this.root;
 
         var name;
-        while(name = names.shift()){
-            if(names.length){
+        while(name = names.shift()) {
+            if(names.length) {
                 // console.log(root);            
                 root = (root[name] = root[name] || {});
-            }else{
-                if($.isUndefined(root[name])){
+            } else {
+                if($.isUndefined(root[name])) {
 
                     try {
                         var f = $.isFunction(this.maker) && this.maker(this.root);
@@ -267,62 +265,65 @@
             }
         }
         moduleQueue.fire();
-        
+
         this.destroy();
     }
     // Module._cache = {}; //缓存
-    Module._depsMap = {};//
-    Module._needModule = {};//进行定义还差哪些模块
+    Module._depsMap = {}; //
+    Module._needModule = {}; //进行定义还差哪些模块
     // Module._modules = {};//Module实例
     // Module._definedModulesMap = {};//已经定义过的module，1：定义过，2：定义出错过的
     // Module._queue = {};//队列实例
-
-    var regAlias = /^[-a-z0-9_$]{2,}$/i,//别名正则
-        regProtocol = /^(\w+)(\d)?:.*/,//协议
-        regISJS = /\.js$/,//是否为js
-        regEXT = /\.(\w+)$/;//后缀
+    var regAlias = /^[-a-z0-9_$]{2,}$/i,
+        //别名正则
+        regProtocol = /^(\w+)(\d)?:.*/,
+        //协议
+        regISJS = /\.js$/,
+        //是否为js
+        regEXT = /\.(\w+)$/; //后缀
     /**
      * 获取真实url
      * @param  {[type]} url [description]
      * @return {[type]}     [description]
      */
-    function getPath(url,root,ret){
+
+    function getPath(url, root, ret) {
         root = root || config.path;
 
         //[]里面，不是开头的-要转义，因此要用/^[-a-z0-9_$]{2,}$/i而不是/^[a-z0-9_-$]{2,}
         //别名至少两个字符；不用汉字是避开字符集的问题
-        if(regAlias.test(url) && config.alias[url] ){
+        if(regAlias.test(url) && config.alias[url]) {
             ret = config.alias[url]
-        }else{
-            root = root.substr( 0, root.lastIndexOf('/') );
-            if(regProtocol.test(url)){  //如果用户路径包含协议
+        } else {
+            root = root.substr(0, root.lastIndexOf('/'));
+            if(regProtocol.test(url)) { //如果用户路径包含协议
                 ret = url
-            }else {
-                var tmp = url.charAt(0),_2 = url.slice(0,2);                
+            } else {
+                var tmp = url.charAt(0),
+                    _2 = url.slice(0, 2);
 
-                if( tmp !== '.' && tmp != '/'){  //相对于根路径
+                if(tmp !== '.' && tmp != '/') { //相对于根路径
                     ret = root + '/' + url;
-                }else if( _2 === './'){ //相对于兄弟路径
+                } else if(_2 === './') { //相对于兄弟路径
                     ret = root + '/' + url.substr(2);
                     // $.log(ret+','+2);
-                }else if( _2 === '..'){ //相对于父路径
-                    var arr = root.replace(/\/$/,'').split('/');
-                    tmp = url.replace(/\.\.\//g,function(){
+                } else if(_2 === '..') { //相对于父路径
+                    var arr = root.replace(/\/$/, '').split('/');
+                    tmp = url.replace(/\.\.\//g, function() {
                         arr.pop();
                         return '';
                     });
-                    ret = arr.join('/')+'/'+tmp;
+                    ret = arr.join('/') + '/' + tmp;
                     // $.log(ret);
                 }
             }
         }
-        var ext = 'js';//默认是js文件
-
+        var ext = 'js'; //默认是js文件
         tmp = ret.replace(/[?#].*/, '');
-        if(regEXT.test( tmp )){
+        if(regEXT.test(tmp)) {
             ext = RegExp.$1;
         }
-        if( ext!=='css' &&tmp === ret && !regISJS.test(ret)){//如果没有后缀名会补上.js
+        if(ext !== 'css' && tmp === ret && !regISJS.test(ret)) { //如果没有后缀名会补上.js
             ret += '.js';
         }
         return [ret, ext];
@@ -347,16 +348,15 @@
         this['@GOD'] = 'QUEUE';
     }
     // Queue.modules = {};
-
     Queue.prototype.push = function(fn, args, scope) {
         return this._add(fn, args, scope, 'push');
     }
-    Queue.prototype.unshift = function(fn, args, scope){
-        
+    Queue.prototype.unshift = function(fn, args, scope) {
+
         return this._add(fn, args, scope, 'unshift');
     }
-    Queue.prototype._add = function(fn, args, scope, type){
-        if(!type){
+    Queue.prototype._add = function(fn, args, scope, type) {
+        if(!type) {
             return this;
         }
 
@@ -366,7 +366,7 @@
         }
 
         this.taskList[type](args);
-        $.log('queue lengther '+ type+this.taskList.length)
+        $.log('queue lengther ' + type + this.taskList.length)
         return this;
     }
     Queue.prototype.fire = function() {
@@ -376,30 +376,28 @@
             var args = $.isArray(fn[1]) ? fn[1] : [],
                 scope = fn[2] || null;
             fn = fn[0];
-            
+
             // argsFromCall = $.isArray(argsFromCall)?argsFromCall:[argsFromCall];
             // args = args.concat(argsFromCall);
-
             $.isFunction(fn) && fn.apply(scope, args);
             // this.destroy();
         }
         return this;
     }
     Queue.prototype.destroy = function() {
-        
-        
+
+
         $.log('queue destroy');
         this.taskList.length = 0;
         delete this.taskList;
         delete this['@GOD'];
         // delete this.moduleName
         // delete Queue.modules[this.moduleName];
-        
     }
     Queue.prototype._canIDo = function() {
         return this.taskList.length !== 0;
     }
-    
+
     /**
      * 请求一个或者多个模块
      * @param  {[type]}   ids      模块ids
@@ -407,86 +405,85 @@
      * @param  {[type]}   fail     如果有没有加载成功，则执行fail
      * @return {[type]}            [description]
      */
-    function require(ids, callback/*, fail*/) {
 
-            if(!ids){
-                return ;
-            }
-            moduleQueue.push(function(){
-                callback();
-                moduleQueue.fire();
-            });
-            var parentModule;
+    function require(ids, callback /*, fail*/ ) {
 
-            if(parentModule = ids._qname){
-                
-            }else{
-                ids = String(ids).split(',');
-            }
-            var queue = [];
-            if(ids.length===0){
-                moduleQueue.fire();
-            }
-            
-            each(ids, function(v, i, arr) {
-                
-                // debugger;
-                if(v){
+        if(!ids) {
+            return;
+        }
+        moduleQueue.push(function() {
+            callback();
+            moduleQueue.fire();
+        });
+        var parentModule;
 
-                    var arr = getPath(v),
-                        url = arr[0],
-                        ext = arr[1];
+        if(parentModule = ids._qname) {
 
-                    //判断是否有依赖关系  
-                    if(parentModule){
-                        Module._depsMap[url] = parentModule;
-                        
-                        $.log('发现&添加【依赖关系表】:'+url);
-                        if(!Module._needModule[parentModule]){
-                            Module._needModule[parentModule] = [];
-                        }
-                        Module._needModule[parentModule].push(url);                            
-                    }else{
-                        if(Module.defined(v.replace('/','.'))){
-                            (arr.length===i+1) && cb();
-                            return;
-                        }
+        } else {
+            ids = String(ids).split(',');
+        }
+        var queue = [];
+        if(ids.length === 0) {
+            moduleQueue.fire();
+        }
+
+        each(ids, function(v, i, arr) {
+
+            // debugger;
+            if(v) {
+
+                var arr = getPath(v),
+                    url = arr[0],
+                    ext = arr[1];
+
+                //判断是否有依赖关系  
+                if(parentModule) {
+                    Module._depsMap[url] = parentModule;
+
+                    $.log('发现&添加【依赖关系表】:' + url);
+                    if(!Module._needModule[parentModule]) {
+                        Module._needModule[parentModule] = [];
                     }
-                    if(!_requireFileMap[url]) {
-                        
-                        // moduleQueue.push(cb,[url]);
-
-                        queue.push(url);
-                        // debugger;
-                        _requireFileMap[url] = 1;//开始加载之前，beforeSend
-                        if(ext === 'js') {                                                                               
-
-                            loadJS(url, cb);
-                        } else {
-                            loadCSS(url, cb);
-                        }
-                        _requireFileMap[url] = 2;//正在发送请求
-                        
-                        $.log(url+'=====> loading');
+                    Module._needModule[parentModule].push(url);
+                } else {
+                    if(Module.defined(v.replace('/', '.'))) {
+                        (arr.length === i + 1) && cb();
+                        return;
                     }
                 }
-                
-            });
-            //获取完整路径→加载js|css
-            //取完整路径：判断是否是完整路径→不是，添加rooturl→最后格式化url            
-            
-            function cb(){                 
-                var file = queue.shift();
-                if(file){
-                    $.log(file+'++++++++++++++++>loaded');
-                    
-                    _requireFileMap[file] = 3;                    
+                if(!_requireFileMap[url]) {
+
+                    // moduleQueue.push(cb,[url]);
+                    queue.push(url);
+                    // debugger;
+                    _requireFileMap[url] = 1; //开始加载之前，beforeSend
+                    if(ext === 'js') {
+
+                        loadJS(url, cb);
+                    } else {
+                        loadCSS(url, cb);
+                    }
+                    _requireFileMap[url] = 2; //正在发送请求
+                    $.log(url + '=====> loading');
                 }
-                if(queue.length===0){
-                    moduleQueue.fire();
-                }
+            }
+
+        });
+        //获取完整路径→加载js|css
+        //取完整路径：判断是否是完整路径→不是，添加rooturl→最后格式化url            
+
+        function cb() {
+            var file = queue.shift();
+            if(file) {
+                $.log(file + '++++++++++++++++>loaded');
+
+                _requireFileMap[file] = 3;
+            }
+            if(queue.length === 0) {
+                moduleQueue.fire();
             }
         }
+    }
     /**
      * 加载js，css文件通用方法
      * @param  {[type]}   url      [description]
@@ -640,7 +637,7 @@
             }
         }, 1)
     }
-   
+
     /**
      * 获取类型
      * @param  {[type]} obj 要判断的对象
@@ -655,6 +652,7 @@
      * @param {Object} target 原有的默认
      * @param {Object} source 第三方来源
      */
+
     function mix(target, source) {
         var args = _arrSlice.call(arguments),
             i = 1,
@@ -698,25 +696,27 @@
     //6 INFO 更一般化的通知
     //7 DEBUG 调试消息
     //
-    function log(str, showInPage, level){
-        
-        if($.isNumber(showInPage)){
+
+
+    function log(str, showInPage, level) {
+
+        if($.isNumber(showInPage)) {
             level = showInPage;
             showInPage = true;
-        }else{
+        } else {
             level = level || 5;
         }
 
-        var  show = level <= config.debugLevel;
-       
-        if(show){
-            if( showInPage === true ){
-                var div =  DOC.createElement('pre');
+        var show = level <= config.debugLevel;
+
+        if(show) {
+            if(showInPage === true) {
+                var div = DOC.createElement('pre');
                 div.className = 'MixJS_log';
-                div.innerHTML = str + '';//确保为字符串
+                div.innerHTML = str + ''; //确保为字符串
                 DOC.body.appendChild(div)
-            }else if( global.console ){
-                global.console.log( str );
+            } else if(global.console) {
+                global.console.log(str);
             }
         }
         return str
