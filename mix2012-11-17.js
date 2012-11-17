@@ -54,7 +54,6 @@
         debug:isDebug,
         charset:CHARSET
     }
-    var moduleQueue = new Queue();
     var $ = {
         version: VERSION,
         now: now,
@@ -62,7 +61,7 @@
         head: HEAD,
         reg: reg,
         log:function(){
-            // console && console.log && console.log.apply(console,arguments);
+            console && console.log && console.log.apply(console,arguments);
         },
         emptyFn: _emptyFn,
         mix: mix,
@@ -83,58 +82,66 @@
          * @return {[type]}            [description]
          */
         require: function(ids, callback/*, fail*/) {
-
-            if(!ids){
+            if($.isUndefined(ids)){
                 return this;
             }
-            moduleQueue.push(callback);
-            var parentModule;
-
-            if(parentModule = ids._qname){
-                
+            var q = ids._q, tcb,jsQueue,parentModule;
+            if(q && q['@GOD']==='QUEUE'){
+                q.push(cb);
+                parentModule = ids._qname;
+                jsQueue = q;
+                tcb = function(){
+                    q.fire();
+                }
             }else{
                 ids = String(ids).split(',');
+                tcb = cb;
             }
+            
             var queue = [];
 
             each(ids, function(v, i) {
-                // debugger;
                 if(v){
                     var arr = getPath(v),
                         url = arr[0],
                         ext = arr[1];
-
-                    //判断是否有依赖关系  
-                    if(parentModule){
-                        Module._depsMap[url] = parentModule;
+                    
+                    if(!_requireFileMap[url]) {             
                         
-                        console.log('add 依赖关系表',url);
-                        if(!Module._needModule[parentModule]){
-                            Module._needModule[parentModule] = [];
-                        }
-                        Module._needModule[parentModule].push(url);                            
-                    }else{
-                        if(Module.defined(v.replace('/','.'))){
-                            moduleQueue.fire();
-                        }
-                    }
-                    if(!_requireFileMap[url]) {
-                        
-                        // moduleQueue.push(cb,[url]);
-
                         queue.push(url);
-                        // debugger;
+                                         
                         _requireFileMap[url] = 1;//开始加载之前，beforeSend
                         if(ext === 'js') {
-                                                                               
+                            v = v.replace('/','.');
 
-                            loadJS(url, cb);
+                            if(jsQueue){
+                                Module._depsMap[v] = parentModule;
+                                var tt = Module._cache[parentModule] = jsQueue;
+                                console.log('add _cache',v);
+                                if(!Module._needModule[parentModule]){
+                                    Module._needModule[parentModule] = [];
+                                }
+                                Module._needModule[parentModule].push(v);
+                                
+                            }else{
+                                Module._depsMap[v] = v;
+                                var tt = Module._cache[v] = new Queue(v);
+
+                                tt.push(tcb);
+                            }
+
+                            loadJS(url, function(t){
+                                console.log('tt.fire',tt);
+                                tt.fire();
+                            });
+                            $.log(url,'js loading');
                         } else {
-                            loadCSS(url, cb);
+                            loadCSS(url, tcb);
                         }
                         _requireFileMap[url] = 2;//正在发送请求
-                        
                         $.log(url,'=====> loading');
+                    }else{
+                        tcb();
                     }
                 }
                 
@@ -142,18 +149,17 @@
             //获取完整路径→加载js|css
             //取完整路径：判断是否是完整路径→不是，添加rooturl→最后格式化url            
             
-            function cb(){                 
-                var file = queue.shift();
-                if(file){
-                    console.log(file,'++++++++++++++++>loaded');
-                    
-                    _requireFileMap[file] = 3;
-                    
+            function cb(){
+                    var file = queue.shift();                    
+                    if(file){
+                        console.log(file,'++++++++++++++++>loaded');
+                        _requireFileMap[file] = 3; 
+                    }
                     if(queue.length===0){
-                        moduleQueue.fire();
+                        console.log('require callback fire');
+                        callback && $.isFunction(callback) && callback();
                     }
                 }
-            }
             return this;
         },
         /**
@@ -243,18 +249,26 @@
         });
         this.deps = deps = t;
         
-        
+        var q = Module._cache[Module._depsMap[this.id]];
+
+        if(!q || q['@GOD']==='QUEUE'){
+            q = new Queue(this.id);
+            console.log('new queue',this.id);
+        }else{
+            console.log('shift _cache',Module._depsMap[this.id]);
+        }
         // var q = new Queue(this.id);
         //设置步长，订阅消息：命名空间和销毁
-        moduleQueue.push(this.namespace,[],this);
+        q.push(this.namespace,[],this);
         
+        deps._q = q;
         deps._qname = this.id;    
         if(deps.length===0){
-            moduleQueue.fire();
+            q.fire();
         }else{
 
             $.require(deps,function(){
-                moduleQueue.fire();
+                q.fire();
             });
         }
 
@@ -289,20 +303,12 @@
         if(!this.id){
             return;
         }
-        var needModules = Module._needModule[this.id];
+        var needModules = Module._needModule[this.id]
+        if($.isArray(needModules) && needModules.length!==0){
 
-        var selfFn = arguments.callee,self = this;
-        if($.isArray(needModules)){
-            for(var i =0,len = needModules.length;i<len;i++){
-                var file = _requireFileMap[needModules[i]];
-                console.log('----'+this.id+'---->',needModules[i],file);
-                if(file !== 3){
-                    $.log('namespage====',this.id,'不符合ready要求',needModules);
-                    //重新压入栈
-                    moduleQueue.push(selfFn,[],self);
-                    return;
-                }
-            }           
+            $.log('namespage====',this.id,'不符合ready要求',needModules);
+            
+            return;
         }
 
         var names = this.id.split('.'),
@@ -331,7 +337,21 @@
                 }
             }
         }
-        moduleQueue.fire();
+        var parentModule;
+        if(parentModule = Module._depsMap[this.id]){
+            //告诉老大，我准备好了
+            
+            var parentModuleNeedArr = Module._needModule[parentModule];
+            
+            for(var i = 0,len = parentModuleNeedArr.length;i<len;i++){
+                if(parentModuleNeedArr[i] === this.id){
+                    parentModuleNeedArr.splice(i,1);
+                    console.log('我准备好了,互叫上级');
+                    Module._modules[parentModule].namespace();
+                    break;
+                }
+            }
+        }
         
         this.destroy();
     }
@@ -406,12 +426,12 @@
     console.log(new Date-now);
      * 
      */
-    function Queue() {
-        // this.moduleName = moduleName;
+    function Queue(moduleName) {
+        this.moduleName = moduleName;
         this.taskList = [];
         this['@GOD'] = 'QUEUE';
     }
-    // Queue.modules = {};
+    Queue.modules = {};
 
     Queue.prototype.push = function(fn, args, scope) {
         return this._add(fn, args, scope, 'push');
@@ -437,29 +457,26 @@
     Queue.prototype.fire = function() {
         if(this._canIDo()) {
             var fn = this.taskList.pop();
-
-            var args = $.isArray(fn[1]) ? fn[1] : [],
+            console.log(fn[0],this.taskList.length);
+            var args = $.isArray(fn[1]) ? fn[1] : _emptyFn,
                 scope = fn[2] || null;
             fn = fn[0];
-            
-            // argsFromCall = $.isArray(argsFromCall)?argsFromCall:[argsFromCall];
-            // args = args.concat(argsFromCall);
 
             $.isFunction(fn) && fn.apply(scope, args);
-            // this.destroy();
+            this.destroy();
         }
         return this;
     }
     Queue.prototype.destroy = function() {
         
-        
-        console.log('queue destroy');
-        this.taskList.length = 0;
-        delete this.taskList;
-        delete this['@GOD'];
-        // delete this.moduleName
-        // delete Queue.modules[this.moduleName];
-        
+        if(!this._canIDo()) {
+            console.log('queue clear');
+            //this.taskList.length = 0;
+            // delete this.taskList;
+            // delete this['@GOD'];
+            // delete this.moduleName
+            // delete Queue.modules[this.moduleName];
+        }
     }
     Queue.prototype._canIDo = function() {
         return this.taskList.length !== 0;
@@ -525,12 +542,11 @@
     function jsGetCallback(node, cb) {
         return function() {
             if(regJSLOAD.test(node.readyState)) {
-                // alert(node.src);
+
                 // Ensure only run once and handle memory leak in IE
                 node.onload = node.onerror = node.onreadystatechange = null
 
                 // Remove the script to reduce memory leak
-                // console.log(!config);
                 if(node.parentNode && !config.debug) {
                     HEAD.removeChild(node)
                 }

@@ -1,6 +1,4 @@
-MixJS.define('c',function(){
-	console.log('c is loaded');
-	return function(){
-
-	}
-})
+console.log('c is loaded');
+function abc(){
+	alert('i am abc from c.js');
+}

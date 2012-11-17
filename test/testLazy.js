@@ -10,3 +10,10 @@ MixJS.define('testLazy',['b','c.css','testNormal'],function($){
         console.log('testLazy==>',$.testLazy);
     }
 })
+.define('testLazy2',['b','a'],function(){
+	// alert('testLazy2');
+	$.a();
+	return function(){
+
+	}
+})
