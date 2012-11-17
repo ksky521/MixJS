@@ -1,4 +1,4 @@
-console.log('c is loaded');
+MixJS.log('c is loaded');
 function abc(){
 	alert('i am abc from c.js');
 }

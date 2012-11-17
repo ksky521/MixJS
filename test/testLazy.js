@@ -1,5 +1,5 @@
 MixJS.define('testLazy',['b','c.css','testNormal'],function($){
-    console.log('testLazy ==>executing');
+    $.log('testLazy ==>executing');
     $.testNormal();
     return function(){
         // $.require('a',function(){
@@ -7,7 +7,7 @@ MixJS.define('testLazy',['b','c.css','testNormal'],function($){
         // });
         
         
-        console.log('testLazy==>',$.testLazy);
+        $.log('testLazy==>',$.testLazy);
     }
 })
 .define('testLazy2',['b','a'],function(){

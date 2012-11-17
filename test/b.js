@@ -1,5 +1,5 @@
-MixJS.define('b',function(){
-	console.log('b.js is loaded');
+MixJS.define('b',function($){
+	$.log('b.js is loaded');
 	return function(){
 
 	}

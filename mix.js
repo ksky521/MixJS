@@ -5,7 +5,7 @@
             node = scripts[scripts.length - 1]; //FF下可以使用DOC.currentScript
             return node;
         })(),
-        isDebug = !! curScriptNode.getAttribute('debug'),
+        isDebug = !!curScriptNode.getAttribute('debug'),
         MixJSName = curScriptNode.getAttribute('name') || 'MixJS',
         CHARSET = curScriptNode.getAttribute('charset') || 'utf-8',
         ALIAS = {},//alias别名快速定位
@@ -51,6 +51,7 @@
         alias:ALIAS,
         path:PATH,
         timeout:_timeout,
+        debugLevel:isDebug?7:8,//debug级别，用法详见log方法
         debug:isDebug,
         charset:CHARSET
     }
@@ -60,17 +61,14 @@
         now: now,
         path: PATH,
         head: HEAD,
-        reg: reg,
-        log:function(){
-            // console && console.log && console.log.apply(console,arguments);
-        },
+        reg: reg,        
+        log: log,
         emptyFn: _emptyFn,
         mix: mix,
         each:each,
         load: load,
         loadJS: loadJS,
         loadCSS: loadCSS,
-        Queue: Queue,
         defined:Module.defined,
         config: function(cfg) {
             config = mix(config,cfg);
@@ -108,7 +106,7 @@
                     if(parentModule){
                         Module._depsMap[url] = parentModule;
                         
-                        console.log('add 依赖关系表',url);
+                        $.log('add 依赖关系表:'+url);
                         if(!Module._needModule[parentModule]){
                             Module._needModule[parentModule] = [];
                         }
@@ -134,7 +132,7 @@
                         }
                         _requireFileMap[url] = 2;//正在发送请求
                         
-                        $.log(url,'=====> loading');
+                        $.log(url+'=====> loading');
                     }
                 }
                 
@@ -145,7 +143,7 @@
             function cb(){                 
                 var file = queue.shift();
                 if(file){
-                    console.log(file,'++++++++++++++++>loaded');
+                    $.log(file+'++++++++++++++++>loaded');
                     
                     _requireFileMap[file] = 3;
                     
@@ -186,7 +184,7 @@
         use: function() {}
     };
     //基本类型判断
-    'Function,String,Object,Array,Undefined,Boolean'.replace(reg, function(t) {
+    'Function,String,Object,Array,Undefined,Boolean,Number'.replace(reg, function(t) {
         $['is' + t] = function(s) {
             return isType(s, t)
         }
@@ -285,7 +283,7 @@
     }
 
     Module.prototype.namespace = function() {
-        $.log('namespace===>',this.id);
+        $.log('namespace===>'+this.id);
         if(!this.id){
             return;
         }
@@ -295,9 +293,9 @@
         if($.isArray(needModules)){
             for(var i =0,len = needModules.length;i<len;i++){
                 var file = _requireFileMap[needModules[i]];
-                console.log('----'+this.id+'---->',needModules[i],file);
+                $.log('----'+this.id+'---->'+needModules[i]+';'+file);
                 if(file !== 3){
-                    $.log('namespage====',this.id,'不符合ready要求',needModules);
+                    $.log('namespage====' + this.id + '不符合ready要求');
                     //重新压入栈
                     moduleQueue.push(selfFn,[],self);
                     return;
@@ -317,7 +315,7 @@
 
                     try {
                         var f = $.isFunction(this.maker) && this.maker(this.root);
-                        // console.log(f);
+                        // $.log(f);
                         if(f) {
                             f['@GOD'] = 'THEO';
                             root[name] = f;
@@ -369,7 +367,7 @@
                     ret = root + '/' + url;
                 }else if( _2 === './'){ //相对于兄弟路径
                     ret = root + '/' + url.substr(2);
-                    // console.log(ret,2);
+                    // $.log(ret+','+2);
                 }else if( _2 === '..'){ //相对于父路径
                     var arr = root.replace(/\/$/,'').split('/');
                     tmp = url.replace(/\.\.\//g,function(){
@@ -377,7 +375,7 @@
                         return '';
                     });
                     ret = arr.join('/')+'/'+tmp;
-                    // console.log(ret);
+                    // $.log(ret);
                 }
             }
         }
@@ -396,14 +394,14 @@
      * 高效队列
     var q = new Queue();
     var now = +new Date;
-    q.on(function(){console.log('success')}).on(function(){console.log('success2')})
+    q.on(function(){$.log('success')}).on(function(){$.log('success2')})
     for(var i = 0;i<10000;i++){
         q.push(i);
     }
     while(q.getLength(){
         q.shift();
     }
-    console.log(new Date-now);
+    $.log(new Date-now);
      * 
      */
     function Queue() {
@@ -431,7 +429,7 @@
         }
 
         this.taskList[type](args);
-        console.log('queue lengther',type,this.taskList.length,args)
+        $.log('queue lengther'+ type+this.taskList.length)
         return this;
     }
     Queue.prototype.fire = function() {
@@ -453,7 +451,7 @@
     Queue.prototype.destroy = function() {
         
         
-        console.log('queue destroy');
+        $.log('queue destroy');
         this.taskList.length = 0;
         delete this.taskList;
         delete this['@GOD'];
@@ -530,7 +528,7 @@
                 node.onload = node.onerror = node.onreadystatechange = null
 
                 // Remove the script to reduce memory leak
-                // console.log(!config);
+                // $.log(!config);
                 if(node.parentNode && !config.debug) {
                     HEAD.removeChild(node)
                 }
@@ -634,7 +632,6 @@
      * @param {Object} target 原有的默认
      * @param {Object} source 第三方来源
      */
-
     function mix(target, source) {
         var args = _arrSlice.call(arguments),
             i = 1,
@@ -664,5 +661,41 @@
         }
         return target;
     }
+    //log(str, showInPage=true, 5 )，
+    //受mass框架启发~
+    //level Number，通过它来过滤显示到控制台的日志数量。0为最少，只显示最致命的错误，
+    //7则连普通的调试消息也打印出来。 显示算法为 level <= $.config.level。
+    //这个$.colre.level默认为9。下面是level各代表的含义。
+    //0 EMERGENCY 致命错误,框架崩溃
+    //1 ALERT 需要立即采取措施进行修复
+    //2 CRITICAL 危急错误
+    //3 ERROR 异常
+    //4 WARNING 警告
+    //5 NOTICE 通知用户已经进行到方法
+    //6 INFO 更一般化的通知
+    //7 DEBUG 调试消息
+    //
+    function log(str, showInPage, level){
+        
+        if($.isNumber(showInPage)){
+            level = showInPage;
+            showInPage = true;
+        }else{
+            level = level || 5;
+        }
 
+        var  show = level <= config.debugLevel;
+       
+        if(show){
+            if( showInPage === true ){
+                var div =  DOC.createElement('pre');
+                div.className = 'MixJS_log';
+                div.innerHTML = str + '';//确保为字符串
+                DOC.body.appendChild(div)
+            }else if( global.console ){
+                global.console.log( str );
+            }
+        }
+        return str
+    }
 }(window, document, undefined));
