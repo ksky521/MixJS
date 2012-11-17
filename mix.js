@@ -94,10 +94,15 @@
                 ids = String(ids).split(',');
             }
             var queue = [];
-
-            each(ids, function(v, i) {
+            if(ids.length===0){
+                moduleQueue.fire();
+            }
+            
+            each(ids, function(v, i, arr) {
+                
                 // debugger;
                 if(v){
+
                     var arr = getPath(v),
                         url = arr[0],
                         ext = arr[1];
@@ -113,7 +118,8 @@
                         Module._needModule[parentModule].push(url);                            
                     }else{
                         if(Module.defined(v.replace('/','.'))){
-                            moduleQueue.fire();
+                            (arr.length===i+1) && cb();
+                            return;
                         }
                     }
                     if(!_requireFileMap[url]) {
@@ -123,8 +129,7 @@
                         queue.push(url);
                         // debugger;
                         _requireFileMap[url] = 1;//开始加载之前，beforeSend
-                        if(ext === 'js') {
-                                                                               
+                        if(ext === 'js') {                                                                               
 
                             loadJS(url, cb);
                         } else {
@@ -145,11 +150,10 @@
                 if(file){
                     $.log(file+'++++++++++++++++>loaded');
                     
-                    _requireFileMap[file] = 3;
-                    
-                    if(queue.length===0){
-                        moduleQueue.fire();
-                    }
+                    _requireFileMap[file] = 3;                    
+                }
+                if(queue.length===0){
+                    moduleQueue.fire();
                 }
             }
             return this;
@@ -176,7 +180,7 @@
                 _emptyArr.splice.call(args, 1, 0, []);
             case 3:
                 //args[1] = ;
-                Module._modules[args[0]] = new Module(args[0], args[1], args[2]);
+                new Module(args[0], args[1], args[2]);
                 break;
             }
             return this;
@@ -210,6 +214,7 @@
     }
     //销毁
     Module.prototype.destroy = function(){
+        $.log('Module.destroy '+ this.id+' destroy');
         delete this.maker;
         this.deps.length = 0;
         delete this.deps;
@@ -245,7 +250,8 @@
         // var q = new Queue(this.id);
         //设置步长，订阅消息：命名空间和销毁
         moduleQueue.push(this.namespace,[],this);
-        
+        console.log('Module.init:['+this.id+']add to Queue');
+
         deps._qname = this.id;    
         if(deps.length===0){
             moduleQueue.fire();
@@ -274,6 +280,8 @@
                 if(!root[name]){
                     return false;
                 }
+                // console.log(name);
+                root = root[name];
             }else{
 
                 return !$.isUndefined(root[name]) && root[name]['@GOD'] === 'THEO';
@@ -305,17 +313,17 @@
 
         var names = this.id.split('.'),
             root = this.root;
+
         var name;
         while(name = names.shift()){
             if(names.length){
-                
-                root = root[name] || {};
+                // console.log(root);            
+                root = (root[name] = root[name] || {});
             }else{
                 if($.isUndefined(root[name])){
 
                     try {
                         var f = $.isFunction(this.maker) && this.maker(this.root);
-                        // $.log(f);
                         if(f) {
                             f['@GOD'] = 'THEO';
                             root[name] = f;
@@ -333,10 +341,10 @@
         
         this.destroy();
     }
-    Module._cache = {}; //缓存
+    // Module._cache = {}; //缓存
     Module._depsMap = {};//
     Module._needModule = {};//进行定义还差哪些模块
-    Module._modules = {};//Module实例
+    // Module._modules = {};//Module实例
     // Module._definedModulesMap = {};//已经定义过的module，1：定义过，2：定义出错过的
     // Module._queue = {};//队列实例
 
@@ -429,7 +437,7 @@
         }
 
         this.taskList[type](args);
-        $.log('queue lengther'+ type+this.taskList.length)
+        $.log('queue lengther '+ type+this.taskList.length)
         return this;
     }
     Queue.prototype.fire = function() {

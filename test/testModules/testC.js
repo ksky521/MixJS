@@ -1,6 +1,6 @@
-MixJS.define('testC',['testModules.testD'],function($){
+MixJS.define('testModules.testC',['testModules/testD'],function($){
     console.log('test C loaded','fire testD');
-    $.testD();
+    $.testModules.testD();
     return function(){
         console.log('i am testC');
     };

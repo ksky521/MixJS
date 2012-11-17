@@ -1,4 +1,4 @@
-MixJS.define('testB',function($){
+MixJS.define('testModules.testB',function($){
     console.log('test B loaded','no fire');
     
     return function(){
