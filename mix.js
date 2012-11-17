@@ -52,9 +52,9 @@
         }
     };
     var config = {
-        alias: ALIAS,
+        alias: ALIAS,//暂时无用
         path: PATH,
-        timeout: _timeout,
+        timeout: _timeout,//暂时无用
         debugLevel: isDebug ? 7 : 8,
         //debug级别，用法详见log方法
         debug: isDebug,

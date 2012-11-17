@@ -11,8 +11,8 @@ MixJS.define('testLazy',['b','c.css','testNormal'],function($){
     }
 })
 .define('testLazy2',['b','a'],function(){
-	// alert('testLazy2');
-	$.a();
+	alert('testLazy2');
+	// $.a();
 	return function(){
 
 	}

@@ -1,7 +1,1 @@
-MixJS.define('a',function($){
-	$.log('a is loaded');
-	
-	return function(){
-		alert('i am a');
-	}
-})
+alert('非模块js加载');

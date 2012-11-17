@@ -94,7 +94,7 @@ function importMixJS($files, $fileType = '.js', $returnFile = true){
                 $matches = array();
                 //去掉注释
                 $content = trim(preg_replace("/\/\*(.*?)\*\//ies", "", $content));
-                $output .= preg_replace("/\/\/\/?\s?import\s+([\w\-\$]+(\.[\w\-\$]+)*);?/ies", "importMixJS('\\1')", $content);
+                $output .= preg_replace("/\/\/\/?\s?MixJS.define\s+([\w\-\$]+(\.[\w\-\$]+)*);?/ies", "importMixJS('\\1')", $content);
             }
         }
     }
