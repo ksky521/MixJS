@@ -86,7 +86,7 @@
                 return this;
             }
             var q = ids._q, tcb,jsQueue,parentModule;
-            if(q && q['@GOD']==='THEO'){
+            if(q && q['@GOD']==='QUEUE'){
                 q.push(cb);
                 parentModule = ids._qname;
                 jsQueue = q;
@@ -101,7 +101,7 @@
             var queue = [];
 
             each(ids, function(v, i) {
-                if(v!==''){
+                if(v){
                     var arr = getPath(v),
                         url = arr[0],
                         ext = arr[1];
@@ -140,6 +140,8 @@
                         }
                         _requireFileMap[url] = 2;//正在发送请求
                         $.log(url,'=====> loading');
+                    }else{
+                        tcb();
                     }
                 }
                 
@@ -148,12 +150,13 @@
             //取完整路径：判断是否是完整路径→不是，添加rooturl→最后格式化url            
             
             function cb(){
-
-                    var file = queue.shift();
-                    console.log(file,'++++++++++++++++>loaded');
-                    _requireFileMap[file] = 3;
-
-                    if(file && queue.length === 0) {
+                    var file = queue.shift();                    
+                    if(file){
+                        console.log(file,'++++++++++++++++>loaded');
+                        _requireFileMap[file] = 3; 
+                    }
+                    if(queue.length===0){
+                        console.log('require callback fire');
                         callback && $.isFunction(callback) && callback();
                     }
                 }
@@ -181,7 +184,7 @@
                 _emptyArr.splice.call(args, 1, 0, []);
             case 3:
                 //args[1] = ;
-                Module._modules[args[0]] = new Module(args[0], args[1], args[2]).load();
+                Module._modules[args[0]] = new Module(args[0], args[1], args[2]);
                 break;
             }
             return this;
@@ -211,6 +214,7 @@
         this.maker = maker;
         this.root = root || $;
         this.queue = null;
+        this.init();
     }
     //销毁
     Module.prototype.destroy = function(){
@@ -234,7 +238,11 @@
         delete this.id;
         
     }
-    Module.prototype.load = function(){
+    Module.prototype.init = function(){
+        if(Module.defined(this.id,this.root)){
+            //已经定义过的
+            return this;
+        }
         var deps = this.deps,t = [];
         each(this.deps,function(v){
             v!=='' && t.push(v/*.replace('.','/')*/);
@@ -243,7 +251,7 @@
         
         var q = Module._cache[Module._depsMap[this.id]];
 
-        if(!q){
+        if(!q || q['@GOD']==='QUEUE'){
             q = new Queue(this.id);
             console.log('new queue',this.id);
         }else{
@@ -289,10 +297,17 @@
         }
         return false;
     }
+
     Module.prototype.namespace = function() {
         $.log('namespace===>',this.id);
-        if(Module._needModule[this.id] && Module._needModule[this.id].length!==0){
-            $.log('namespage====',this.id,'不符合ready要求',Module._needModule[this.id]);
+        if(!this.id){
+            return;
+        }
+        var needModules = Module._needModule[this.id]
+        if($.isArray(needModules) && needModules.length!==0){
+
+            $.log('namespage====',this.id,'不符合ready要求',needModules);
+            
             return;
         }
 
@@ -312,9 +327,11 @@
                         if(f) {
                             f['@GOD'] = 'THEO';
                             root[name] = f;
+                            // Module._definedModulesMap[this.id] = 1;
                             // q.shift();
                         }
                     } catch(e) {
+                        // Module._definedModulesMap[this.id] = 2;//模块定义可能出错了
                         throw new Error('Module.namespace:id=>' + this.id + ',info=>' + e.message);
                     }
                 }
@@ -335,12 +352,14 @@
                 }
             }
         }
+        
         this.destroy();
     }
     Module._cache = {}; //缓存
     Module._depsMap = {};//
-    Module._needModule = {};
+    Module._needModule = {};//进行定义还差哪些模块
     Module._modules = {};//Module实例
+    // Module._definedModulesMap = {};//已经定义过的module，1：定义过，2：定义出错过的
     // Module._queue = {};//队列实例
 
     var regAlias = /^[-a-z0-9_$]{2,}$/i,//别名正则
@@ -410,7 +429,7 @@
     function Queue(moduleName) {
         this.moduleName = moduleName;
         this.taskList = [];
-        this['@GOD'] = 'THEO';
+        this['@GOD'] = 'QUEUE';
     }
     Queue.modules = {};
 
@@ -444,15 +463,19 @@
             fn = fn[0];
 
             $.isFunction(fn) && fn.apply(scope, args);
-            this.clear();
+            this.destroy();
         }
         return this;
     }
-    Queue.prototype.clear = function() {
+    Queue.prototype.destroy = function() {
         
         if(!this._canIDo()) {
             console.log('queue clear');
-            delete Queue.modules[this.moduleName];
+            //this.taskList.length = 0;
+            // delete this.taskList;
+            // delete this['@GOD'];
+            // delete this.moduleName
+            // delete Queue.modules[this.moduleName];
         }
     }
     Queue.prototype._canIDo = function() {
