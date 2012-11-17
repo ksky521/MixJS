@@ -29,9 +29,12 @@ MixJS还在开发阶段。。。。
 * MixJS.define(moduleName, dependencies, factory)
 
 > `moduleName` 为模块名称，不同于其他模块加载，这里的目录间隔符是 `.`
+
 > `dependencies` 数组，或者 `,` 间隔的String
+
 > `factory` 工厂函数，是个闭包函数，return是实际 `moduleName` 的主体，会被绑定到MixJS上
->> factory 接受一个参数：MixJS对象
+
+> * `factory` 接受一个参数：MixJS对象
 
 例如：
 
@@ -58,16 +61,15 @@ MixJS还在开发阶段。。。。
 
 ## 另外功能
 
-除此之外提供了：
+除此之外提供了：  
 
-  MixJS.
-	defined：判断模块是否定义
-	each：数组遍历
-	mix：杂糅
-	load：加载js、css
-	loadJS：加载js
-	loadCSS：加载css
-	isFunction等类型判断方法
+	MixJS.defined：判断模块是否定义
+	MixJS.each：数组遍历
+	MixJS.mix：杂糅
+	MixJS.load：加载js、css
+	MixJS.loadJS：加载js
+	MixJS.loadCSS：加载css
+	MixJS.isFunction等类型判断方法
 
 ## import.php(开发中)
 	
