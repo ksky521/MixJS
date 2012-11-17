@@ -15,8 +15,16 @@
     <script type="text/javascript">
     var h = location.href;
     MixJS.config({path:h});
-    MixJS.require('testLazy',function(){alert('success and over');});
+    MixJS.use('testLazy',function(){alert('success and over');});
 
+    MixJS.use('testLazy,testModules/testA',function(){
+        $.testLazy();
+        alert('success 1');
+    }).use('testLazy,testModules/testB',function(){
+        $.testModules.testB();
+        alert('success 2');
+    });
+    
     </script>
 </body>
 </html>

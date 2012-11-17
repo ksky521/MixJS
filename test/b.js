@@ -3,4 +3,4 @@ MixJS.define('b',function($){
 	return function(){
 
 	}
-})
+});

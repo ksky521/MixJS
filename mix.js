@@ -24,6 +24,7 @@
         now = +new Date,
         
         reg = /[^, ]+/g,
+
         _timeout = 3e4,//30秒超时
         _requireFileMap = {},//require hashmap,1--->发送请求之前，2--->正在加载，3-->加载成功
         _cleanObj = {},
@@ -48,12 +49,13 @@
             }
         };
     var config = {
-        alias:ALIAS,
-        path:PATH,
-        timeout:_timeout,
-        debugLevel:isDebug?7:8,//debug级别，用法详见log方法
-        debug:isDebug,
-        charset:CHARSET
+        alias: ALIAS,
+        path: PATH,
+        timeout: _timeout,
+        preload: _emptyFn,//首先要加载的基础库~
+        debugLevel: isDebug ? 7 : 8,//debug级别，用法详见log方法
+        debug: isDebug,
+        charset: CHARSET
     }
     var moduleQueue = new Queue();
     var $ = {
@@ -73,91 +75,19 @@
         config: function(cfg) {
             config = mix(config,cfg);
         },
-        /**
-         * 请求一个或者多个模块
-         * @param  {[type]}   ids      模块ids
-         * @param  {Function} callback 加载成功后回调函数
-         * @param  {[type]}   fail     如果有没有加载成功，则执行fail
-         * @return {[type]}            [description]
-         */
-        require: function(ids, callback/*, fail*/) {
-
-            if(!ids){
-                return this;
-            }
-            moduleQueue.push(callback);
-            var parentModule;
-
-            if(parentModule = ids._qname){
-                
-            }else{
-                ids = String(ids).split(',');
-            }
-            var queue = [];
-            if(ids.length===0){
-                moduleQueue.fire();
-            }
-            
-            each(ids, function(v, i, arr) {
-                
-                // debugger;
-                if(v){
-
-                    var arr = getPath(v),
-                        url = arr[0],
-                        ext = arr[1];
-
-                    //判断是否有依赖关系  
-                    if(parentModule){
-                        Module._depsMap[url] = parentModule;
-                        
-                        $.log('发现&添加【依赖关系表】:'+url);
-                        if(!Module._needModule[parentModule]){
-                            Module._needModule[parentModule] = [];
-                        }
-                        Module._needModule[parentModule].push(url);                            
-                    }else{
-                        if(Module.defined(v.replace('/','.'))){
-                            (arr.length===i+1) && cb();
-                            return;
-                        }
-                    }
-                    if(!_requireFileMap[url]) {
-                        
-                        // moduleQueue.push(cb,[url]);
-
-                        queue.push(url);
-                        // debugger;
-                        _requireFileMap[url] = 1;//开始加载之前，beforeSend
-                        if(ext === 'js') {                                                                               
-
-                            loadJS(url, cb);
-                        } else {
-                            loadCSS(url, cb);
-                        }
-                        _requireFileMap[url] = 2;//正在发送请求
-                        
-                        $.log(url+'=====> loading');
-                    }
-                }
-                
-            }, this);
-            //获取完整路径→加载js|css
-            //取完整路径：判断是否是完整路径→不是，添加rooturl→最后格式化url            
-            
-            function cb(){                 
-                var file = queue.shift();
-                if(file){
-                    $.log(file+'++++++++++++++++>loaded');
-                    
-                    _requireFileMap[file] = 3;                    
-                }
-                if(queue.length===0){
-                    moduleQueue.fire();
-                }
-            }
-            return this;
+        use: function(ids, callback){
+            var preload = config.preload;
+             if(preload.length) {
+                 require(ids, function() {
+                     config.preload = _emptyArr;
+                     require(ids, callback)
+                 })
+             } else {
+                 require(ids, callback)
+             }
+             return this;
         },
+        
         /**
          * 模块定义
          * @param  {[type]} id     模块id。支持event.broadcast这样的
@@ -184,8 +114,7 @@
                 break;
             }
             return this;
-        },
-        use: function() {}
+        }
     };
     //基本类型判断
     'Function,String,Object,Array,Undefined,Boolean,Number'.replace(reg, function(t) {
@@ -257,7 +186,7 @@
             moduleQueue.fire();
         }else{
 
-            $.require(deps,function(){
+            require(deps,function(){
                 moduleQueue.fire();
             });
         }
@@ -471,7 +400,93 @@
         return this.taskList.length !== 0;
     }
     
+    /**
+     * 请求一个或者多个模块
+     * @param  {[type]}   ids      模块ids
+     * @param  {Function} callback 加载成功后回调函数
+     * @param  {[type]}   fail     如果有没有加载成功，则执行fail
+     * @return {[type]}            [description]
+     */
+    function require(ids, callback/*, fail*/) {
 
+            if(!ids){
+                return ;
+            }
+            moduleQueue.push(function(){
+                callback();
+                moduleQueue.fire();
+            });
+            var parentModule;
+
+            if(parentModule = ids._qname){
+                
+            }else{
+                ids = String(ids).split(',');
+            }
+            var queue = [];
+            if(ids.length===0){
+                moduleQueue.fire();
+            }
+            
+            each(ids, function(v, i, arr) {
+                
+                // debugger;
+                if(v){
+
+                    var arr = getPath(v),
+                        url = arr[0],
+                        ext = arr[1];
+
+                    //判断是否有依赖关系  
+                    if(parentModule){
+                        Module._depsMap[url] = parentModule;
+                        
+                        $.log('发现&添加【依赖关系表】:'+url);
+                        if(!Module._needModule[parentModule]){
+                            Module._needModule[parentModule] = [];
+                        }
+                        Module._needModule[parentModule].push(url);                            
+                    }else{
+                        if(Module.defined(v.replace('/','.'))){
+                            (arr.length===i+1) && cb();
+                            return;
+                        }
+                    }
+                    if(!_requireFileMap[url]) {
+                        
+                        // moduleQueue.push(cb,[url]);
+
+                        queue.push(url);
+                        // debugger;
+                        _requireFileMap[url] = 1;//开始加载之前，beforeSend
+                        if(ext === 'js') {                                                                               
+
+                            loadJS(url, cb);
+                        } else {
+                            loadCSS(url, cb);
+                        }
+                        _requireFileMap[url] = 2;//正在发送请求
+                        
+                        $.log(url+'=====> loading');
+                    }
+                }
+                
+            });
+            //获取完整路径→加载js|css
+            //取完整路径：判断是否是完整路径→不是，添加rooturl→最后格式化url            
+            
+            function cb(){                 
+                var file = queue.shift();
+                if(file){
+                    $.log(file+'++++++++++++++++>loaded');
+                    
+                    _requireFileMap[file] = 3;                    
+                }
+                if(queue.length===0){
+                    moduleQueue.fire();
+                }
+            }
+        }
     /**
      * 加载js，css文件通用方法
      * @param  {[type]}   url      [description]
