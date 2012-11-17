@@ -75,7 +75,7 @@ MixJS还在开发阶段。。。。
 	
 使用url重写和php实时合并js
 
-## pageTool(计划中)
+## packageTool(计划中)
 
 nodejs上线打包工具
 
