@@ -1,7 +1,7 @@
 <IfModule mod_rewrite.c>
 #RewriteEngine on
-# ¸ùÄ¿Â¼ÏÂjs cssÒ²°üÀ¨
+# æ ¹ç›®å½•ä¸‹js cssä¹ŸåŒ…æ‹¬
 #RewriteRule ^([\w+\/]+)\.(js|css)$  import.php?f=$1&type=$2  [L,NE]
-# ²»°üÀ¨¸ùÄ¿Â¼ÏÂjs ºÍcss ÎÄ¼ş
+# ä¸åŒ…æ‹¬æ ¹ç›®å½•ä¸‹js å’Œcss æ–‡ä»¶
 #RewriteRule ^(\w+\/[\w+\/]+)\.(js|css)$  import.php?f=$1&type=$2  [L,NE]
 </IfModule>

@@ -12,16 +12,16 @@ $DEBUG = true;
 //$DEBUG = false;
 define('ROOT', dirname(__FILE__).'/');
 
-$MATCHED = array();
+// $MATCHED = array();
 
-//保证唯一性
-$IMPORTED = array();
+$IMPORTED = array();//保证唯一性
 
 if(isset($_GET['path'])){
     $PATH = explode(',', $_GET['path']);
 }else{
     $PATH = array();
 }
+
 
 
 if(in_array($_GET['type'], array('js','css'))){
@@ -37,75 +37,95 @@ if($type ==='.css'){
 }elseif($type ==='.js'){
     header('Content-type: application/x-javascript; charset: UTF-8;');
 }
-header("cache-control: must-revalidate");
-$offset = 60 * 60 * 24;
-$expire = "expires: " . gmdate ("D, d M Y H:i:s", time() + $offset) . " GMT";
+
+$topFileType = $type;//顶级文件类型~
+
+header('cache-control: must-revalidate');
+$offset = 60 * 60 * 24;//过期时间
+$expire = 'expires: ' . gmdate ('D, d M Y H:i:s', time() + $offset) . ' GMT';
 header ($expire);
 
 /**************************合并输出文件********************/
 
-echo importMixJS(explode(',', $_GET['f']), $type, false);
+$content = importFile(explode(',', $_GET['f']), $type);
+echo implode(";\n", $content);
 
 
-function checkBOM ($filename) { 
-    $file = @fopen($filename, "r"); 
-    $bom = fread($file, 3); 
-    if ($bom != "\xEF\xBB\xBF"){ 
-        return false; 
-    } else { 
-        return true; 
-	}
-}
-
-function importMixJS($files, $fileType = '.js', $returnFile = true){
-    global $MATCHED, $DEBUG, $IMPORTED;
-
-    $output = "";
+function importFile($files, $fileType = '.js'){
+    global $DEBUG, $IMPORTED, $topFileType;
+    $output = array();
+    
 
     if(is_string($files)){
         $files = array($files);
     }else if(!is_array($files)){
         return $output;
     }
-    if($DEBUG){
-    	echo "/**************************************\n";
-    	var_dump($files);
-		echo "**************************************/\n";
-    }
-        
+
     foreach($files as $file){
-        if(strrpos($file, '*')){
-            $output .= importMixJS(getPackage(str_replace(array(".", '*'), array('/', ''), $file)));
-        }elseif(in_array($file, $IMPORTED)){
-            continue;
-        }else{
+        $file = str_replace('.', '/', $file) . $fileType;
+
+        if(!in_array($file, $IMPORTED)){
             $IMPORTED[] = $file;
-            $file = str_replace(".", '/', $file) . $fileType;
-            
-			echo "//===================>引入文件: " . $file . "; 是否从js文件中引入？ ".($returnFile?'是':'否')."\n";
-                
-            if(!in_array($file, $MATCHED)){
-                $content = getFileContents($file);
-                if(!$content){
-                    echo "alert('文件内容为空：$file');\n";
-                    continue;
+
+            $content = getFileContents($file);
+
+            if($fileType == '.js'){
+                //如果是js文件
+                preg_match_all("/\.define\s*\([\"\']([^\"\']+)[\"\']\s*,\s*[\[](.+?)[\]]\s*,\s*function/es", $content, $matches);
+
+                // var_dump($matches);
+                if(isset($matches[2])){
+                    foreach($matches[2] as $val){
+                        // var_dump($val);
+                        $val = explode(',', $val);
+
+                        // $back = array();
+                        // $output = '';
+                        foreach($val as $v){
+                            $v = trim($v);
+                            $v = preg_replace('/[\"\']/s', '', $v);
+                            $type = substr($v, -4);
+                            if($type=='.css'){
+                                $v = substr($v, 0, -4);
+                            }else{
+                                $type = substr($v, -3);
+                                if($type=='.js'){
+                                    $v = substr($v, 0, -4);
+                                }else{
+                                    $type = '.js';
+                                }
+                            }
+                            // var_dump($v);
+                            // var_dump(importFile($v, $type));
+                            $output = array_merge($output, importFile($v, $type)) ;
+                        }                        
+                    }
                 }
-                $MATCHED[] = $file;
-                $matches = array();
-                //去掉注释
-                $content = trim(preg_replace("/\/\*(.*?)\*\//ies", "", $content));
-                $output .= preg_replace("/\/\/\/?\s?MixJS.define\s+([\w\-\$]+(\.[\w\-\$]+)*);?/ies", "importMixJS('\\1')", $content);
+            }else if($fileType == '.css' && $topFileType == '.js'){
+                // $content = 'document.write("<style>'.$content.'</style>")';
+                // var_dump($content);
+                $content = '';
             }
+            
+            echo "/**********************\n";
+            echo '* 加载文件--->'.$file."\n";
+            echo "**********************/\n\n";
+            $output[] = $content;
         }
     }
     return $output;
 }
-
+/**
+ * 获取文件内容
+ * @param  [type] $filename [description]
+ * @return [type]           [description]
+ */
 function getFileContents($filename){
     global $PATH;
 
     $path = $PATH;
-    array_unshift($path, "./");
+    array_unshift($path, './');
 
     foreach($path as $eachPath){
     	if(checkBOM($eachPath . $filename)){
@@ -120,12 +140,25 @@ function getFileContents($filename){
     }
     return file_get_contents(ROOT.$filename);
 }
-
+/**
+ * 检查BOM头
+ * @param  [type] $filename [description]
+ * @return [type]           [description]
+ */
+function checkBOM ($filename) { 
+    $file = @fopen($filename, "r"); 
+    $bom = fread($file, 3); 
+    if ($bom != "\xEF\xBB\xBF"){ 
+        return false; 
+    } else { 
+        return true; 
+    }
+}
 function getPackage($packagePath){
     $files = array();
     if ($handle = opendir($packagePath)) {
         while ($file = readdir($handle)) { 
-            if(strrpos($file, ".js")  && substr($file,0,1) != ".")
+            if(strrpos($file, '.js')  && substr($file,0,1) != '.')
                 $files[] = substr($packagePath . $file, 0, -3); //把最后的.js去掉
         } 
         closedir($handle); 
