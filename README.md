@@ -35,6 +35,7 @@ MixJS还在开发阶段。。。。
 推荐一个模块为一个文件，再次强调模块：文件定义严格按照下面的规范：
 
 > 1、 `moduleName` 为 `.` 间隔的文件路径，例如： `test.A` ，对应的路径是 `test/A.js`，而调用使用 `MixJS.test.A`
+
 > 2、 `dependencies` 中的值为文件路径格式，例如： `test/A`，对应的文件 `test/A.js` 中的define第一个参数（`moduleName` ）就是 `test.A`
 
 #### 为什么这样做？
@@ -48,6 +49,7 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
  * MixJS.use(moduleName, callback)
 
 > moduleName：模块路径，以 `/` 间隔，实际就是文件路径，支持多个模块使用数组或者 `,` 间隔
+
 > callback：回调函数
 
 例如：    
