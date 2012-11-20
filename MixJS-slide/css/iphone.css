@@ -1,0 +1,38 @@
+.slides > .slide {
+
+  -webkit-transition: none !important;
+
+  transition: none !important;
+}
+
+/* iPhone 4 ----------- */
+@media only screen and (-webkit-min-device-pixel-ratio : 1.5), only screen and (min-device-pixel-ratio : 1.5) {
+  /* Styles */
+}
+
+button{
+	padding:20px 40px;
+	margin-right: 40px;
+}
+#ctrlBtns {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    margin-left: -410px;
+}
+.layout-widescreen .slide,.layout-widescreen .help,.layout-widescreen .backdrop{
+  margin-left: -450px;
+  width: 900px;
+}
+.with-notes.popup.layout-widescreen .slide.next,
+.with-notes.popup.layout-faux-widescreen .slide.next {
+	-webkit-transform: translate3d(570px, 80px, 0) scale(0.35);
+
+	transform: translate3d(570px, 80px, 0) scale(0.35);
+}
+.with-notes.popup.layout-widescreen  .note,
+.with-notes.popup.layout-faux-widescreen  .note {
+  -webkit-transform: translate3d(248px, 800px, 0) scale(1.5);
+
+  transform: translate3d(248px, 800px, 0) scale(1.5);
+}
