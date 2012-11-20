@@ -100,12 +100,16 @@
             if(config.preload && config.preload.length !== 0) {
                 $.load(config.preload, function() {
                     config.preload.length = 0;
-                    _require(ids, callback)
+                    _require(ids, cb)
                 })
             } else {
-                _require(ids, callback)
+                _require(ids, cb)
             }
 
+            var self = this;
+            function cb(){
+                callback(self);
+            }
             return this;
         },
 
@@ -495,9 +499,9 @@
                 }
             }
             if(doit){
-                callback();                 
+                callback();  
+
             }else{
-                moduleQueue.fire();
                 moduleQueue.push(check);
             }            
         
@@ -530,7 +534,7 @@
         } else {
             _load(url, callback, fail, charset);
         }
-
+        return $;
         // regISCSS.test(url) ? loadCSS(url, callback):loadJS(url, callback, fail, charset);
     }
 
@@ -569,6 +573,7 @@
         node.async = 'async';
         node.src = url;
         HEAD.insertBefore(node, BASEELEMENT);
+        return $;
     }
 
     //jscallback检测
@@ -623,6 +628,7 @@
 
         node.href = url;
         HEAD.insertBefore(node, BASEELEMENT);
+        return $;
     }
     ///===============>css load检测来自seajs
     // `onload` event is supported in WebKit since 535.23
