@@ -1,5 +1,4 @@
 //通用模块
-
 var Util = require('util'),
     FS = require('fs'),
     getDeps = require('./getDeps'),
