@@ -10,7 +10,7 @@ error_reporting(0);
 
 $DEBUG = true;
 //$DEBUG = false;
-define('ROOT', dirname(__FILE__).'/');
+define('ROOT', dirname(__FILE__).'/test/');//此处是为了测试用的，如果是根目录可以去掉test/
 
 // $MATCHED = array();
 
@@ -69,7 +69,9 @@ function importFile($files, $fileType = '.js'){
             $IMPORTED[] = $file;
 
             $content = getFileContents($file);
-
+            if(empty($content)){
+                $content = 'alert("'.$file.'：内容为空或者没有找到文件")';
+            }
             if($fileType == '.js'){
                 //如果是js文件
                 preg_match_all("/\.define\s*\([\"\']([^\"\']+)[\"\']\s*,\s*[\[](.+?)[\]]\s*,\s*function/es", $content, $matches);
@@ -102,10 +104,10 @@ function importFile($files, $fileType = '.js'){
                         }                        
                     }
                 }
-            }else if($fileType == '.css' && $topFileType == '.js'){
+            }elseif($fileType == '.css' && $topFileType == '.js'){
                 // $content = 'document.write("<style>'.$content.'</style>")';
                 // var_dump($content);
-                $content = '';
+                $content = 'alert("'.$file.':是css文件")';
             }
             
             echo "/**********************\n";

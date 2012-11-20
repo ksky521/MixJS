@@ -1,8 +1,9 @@
 MixJS.define('testModules.testA',['testModules/testB','testModules/testC'],function($){
-    console.log('test A loaded','fire testB testC');
+    $.log('test A loaded','fire testB testC');
     $.testModules.testB();
     $.testModules.testC();
     return function(){
-        console.log('i am testA');
+        alert('i am testA');
+        $.log('i am testA');
     };
 })

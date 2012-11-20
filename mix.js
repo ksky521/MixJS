@@ -8,8 +8,7 @@
         isDebug = !! curScriptNode.getAttribute('debug'),
         MixJSName = curScriptNode.getAttribute('name') || 'MixJS',
         CHARSET = curScriptNode.getAttribute('charset') || 'utf-8',
-        ALIAS = {},
-        //alias别名快速定位
+        
         //获取当前文件父路径
         PATH = (function(node) {
             var url = node.hasAttribute ? // non-IE6/7
@@ -28,7 +27,7 @@
 
         _timeout = 3e4,
         //30秒超时
-        _requireFileMap = {},
+        _requireModuleMap = {},
         //require hashmap,1--->发送请求之前，2--->正在加载，3-->加载成功
         _cleanObj = {},
         _emptyArr = [],
@@ -51,10 +50,13 @@
             }
         }
     };
+
     var config = {
-        alias: ALIAS,//暂时无用
         path: PATH,
-        timeout: _timeout,//暂时无用
+        perload: _emptyArr,
+        //预先加载库
+        timeout: _timeout,
+        //暂时无用
         debugLevel: isDebug ? 7 : 8,
         //debug级别，用法详见log方法
         debug: isDebug,
@@ -75,11 +77,35 @@
         loadJS: loadJS,
         loadCSS: loadCSS,
         defined: Module.defined,
+        noConflict: function() {
+            return this;
+        },
+        /**
+         * 设置
+         * @param  {[type]} cfg [description]
+         * @return {[type]}     [description]
+         */
         config: function(cfg) {
             config = mix(config, cfg);
         },
+       
+        /**
+         * 模块调用
+         * @param  {[type]}   ids      [description]
+         * @param  {Function} callback [description]
+         * @return {[type]}            [description]
+         */
         use: function(ids, callback) {
-            require(ids, callback)
+
+            if(config.preload && config.preload.length !== 0) {
+                $.load(config.preload, function() {
+                    config.preload.length = 0;
+                    _require(ids, callback)
+                })
+            } else {
+                _require(ids, callback)
+            }
+
             return this;
         },
 
@@ -105,7 +131,8 @@
                 _emptyArr.splice.call(args, 1, 0, []);
             case 3:
                 //args[1] = ;
-                new Module(args[0], args[1], args[2]);
+                var id = args[0].replace('/', '.'); //event/bindEvent => event.bindEvent;
+                new Module(id, args[1], args[2]);
                 break;
             }
             return this;
@@ -129,7 +156,7 @@
      */
 
     function Module(id, deps, maker, root) {
-        id = id.replace('/', '.'); //event/bindEvent => event.bindEvent;
+
         this.id = id;
         this.deps = String(deps).split(','); //必须是数组
         this.maker = maker;
@@ -182,7 +209,7 @@
             moduleQueue.fire();
         } else {
 
-            require(deps, function() {
+            _require(deps, function() {
                 moduleQueue.fire();
             });
         }
@@ -193,27 +220,11 @@
      * 模块是否定义
      * 判断一个模块是否通过define定义的
      * @param  {[type]} id   [description]
-     * @param  {[type]} root [description]
      * @return {[type]}      [description]
      */
-    Module.defined = function(id, root) {
-        root = root || $;
-
-        var names = id.split('.'),
-            name;
-        while(name = names.shift()) {
-            if(names.length) {
-                if(!root[name]) {
-                    return false;
-                }
-                // console.log(name);
-                root = root[name];
-            } else {
-
-                return !$.isUndefined(root[name]) && root[name]['@GOD'] === 'THEO';
-            }
-        }
-        return false;
+    Module.defined = function(id) {
+      
+        return _requireModuleMap[id] === 3;
     }
 
     Module.prototype.namespace = function() {
@@ -226,9 +237,11 @@
         var selfFn = arguments.callee,
             self = this;
         if($.isArray(needModules)) {
+
             for(var i = 0, len = needModules.length; i < len; i++) {
-                var file = _requireFileMap[needModules[i]];
-                $.log('----' + this.id + '---->' + needModules[i] + ';' + file);
+
+                var file = _requireModuleMap[needModules[i]];
+
                 if(file !== 3) {
                     $.log('namespage====' + this.id + '不符合ready要求');
                     //重新压入栈
@@ -252,8 +265,9 @@
                     try {
                         var f = $.isFunction(this.maker) && this.maker(this.root);
                         if(f) {
-                            f['@GOD'] = 'THEO';
+                            f['@GOD'] = 'THEO';//加个尾巴~
                             root[name] = f;
+                            _requireModuleMap[this.id] = 3;
                             // Module._definedModulesMap[this.id] = 1;
                             // q.shift();
                         }
@@ -264,6 +278,7 @@
                 }
             }
         }
+        //检查下上级模块是否符合callback？
         moduleQueue.fire();
 
         this.destroy();
@@ -274,9 +289,7 @@
     // Module._modules = {};//Module实例
     // Module._definedModulesMap = {};//已经定义过的module，1：定义过，2：定义出错过的
     // Module._queue = {};//队列实例
-    var regAlias = /^[-a-z0-9_$]{2,}$/i,
-        //别名正则
-        regProtocol = /^(\w+)(\d)?:.*/,
+    var regProtocol = /^(\w+)(\d)?:.*/,
         //协议
         regISJS = /\.js$/,
         //是否为js
@@ -289,35 +302,30 @@
 
     function getPath(url, root, ret) {
         root = root || config.path;
-
-        //[]里面，不是开头的-要转义，因此要用/^[-a-z0-9_$]{2,}$/i而不是/^[a-z0-9_-$]{2,}
-        //别名至少两个字符；不用汉字是避开字符集的问题
-        if(regAlias.test(url) && config.alias[url]) {
-            ret = config.alias[url]
+       
+        root = root.substr(0, root.lastIndexOf('/'));
+        if(regProtocol.test(url)) { //如果用户路径包含协议
+            ret = url
         } else {
-            root = root.substr(0, root.lastIndexOf('/'));
-            if(regProtocol.test(url)) { //如果用户路径包含协议
-                ret = url
-            } else {
-                var tmp = url.charAt(0),
-                    _2 = url.slice(0, 2);
+            var tmp = url.charAt(0),
+                _2 = url.slice(0, 2);
 
-                if(tmp !== '.' && tmp != '/') { //相对于根路径
-                    ret = root + '/' + url;
-                } else if(_2 === './') { //相对于兄弟路径
-                    ret = root + '/' + url.substr(2);
-                    // $.log(ret+','+2);
-                } else if(_2 === '..') { //相对于父路径
-                    var arr = root.replace(/\/$/, '').split('/');
-                    tmp = url.replace(/\.\.\//g, function() {
-                        arr.pop();
-                        return '';
-                    });
-                    ret = arr.join('/') + '/' + tmp;
-                    // $.log(ret);
-                }
+            if(tmp !== '.' && tmp != '/') { //相对于根路径
+                ret = root + '/' + url;
+            } else if(_2 === './') { //相对于兄弟路径
+                ret = root + '/' + url.substr(2);
+                // $.log(ret+','+2);
+            } else if(_2 === '..') { //相对于父路径
+                var arr = root.replace(/\/$/, '').split('/');
+                tmp = url.replace(/\.\.\//g, function() {
+                    arr.pop();
+                    return '';
+                });
+                ret = arr.join('/') + '/' + tmp;
+                // $.log(ret);
             }
         }
+
         var ext = 'js'; //默认是js文件
         tmp = ret.replace(/[?#].*/, '');
         if(regEXT.test(tmp)) {
@@ -398,6 +406,7 @@
         return this.taskList.length !== 0;
     }
 
+
     /**
      * 请求一个或者多个模块
      * @param  {[type]}   ids      模块ids
@@ -406,15 +415,12 @@
      * @return {[type]}            [description]
      */
 
-    function require(ids, callback /*, fail*/ ) {
+    function _require(ids, callback /*, fail*/ ) {
 
         if(!ids) {
             return;
         }
-        moduleQueue.push(function() {
-            callback();
-            moduleQueue.fire();
-        });
+        moduleQueue.push(check);
         var parentModule;
 
         if(parentModule = ids._qname) {
@@ -428,60 +434,73 @@
         }
 
         each(ids, function(v, i, arr) {
-
-            // debugger;
+            
             if(v) {
-
                 var arr = getPath(v),
                     url = arr[0],
-                    ext = arr[1];
+                    ext = arr[1],
+                    mName = v.replace('/','.');
 
+                // debugger;           
                 //判断是否有依赖关系  
                 if(parentModule) {
                     Module._depsMap[url] = parentModule;
 
-                    $.log('发现&添加【依赖关系表】:' + url);
+                    $.log('发现&添加【依赖关系表】:' + mName);
                     if(!Module._needModule[parentModule]) {
                         Module._needModule[parentModule] = [];
                     }
-                    Module._needModule[parentModule].push(url);
-                } else {
-                    if(Module.defined(v.replace('/', '.'))) {
-                        (arr.length === i + 1) && cb();
-                        return;
-                    }
+                    Module._needModule[parentModule].push(mName);
                 }
-                if(!_requireFileMap[url]) {
 
-                    // moduleQueue.push(cb,[url]);
+                //因为php实时合并或者提前引用，加一层判断，防止重复加载
+                if(Module.defined(mName)) {
+                    queue.push(url);
+                    cb();
+                    return;
+                }
+
+                if(!_requireModuleMap[mName]) {
+
                     queue.push(url);
                     // debugger;
-                    _requireFileMap[url] = 1; //开始加载之前，beforeSend
+                    _requireModuleMap[mName] = 1; //开始加载之前，beforeSend
                     if(ext === 'js') {
 
                         loadJS(url, cb);
                     } else {
                         loadCSS(url, cb);
                     }
-                    _requireFileMap[url] = 2; //正在发送请求
+                    _requireModuleMap[mName] = 2; //正在发送请求
                     $.log(url + '=====> loading');
                 }
             }
 
-        });
-        //获取完整路径→加载js|css
-        //取完整路径：判断是否是完整路径→不是，添加rooturl→最后格式化url            
+        });                 
 
         function cb() {
-            var file = queue.shift();
-            if(file) {
-                $.log(file + '++++++++++++++++>loaded');
+            queue.shift();            
 
-                _requireFileMap[file] = 3;
-            }
             if(queue.length === 0) {
                 moduleQueue.fire();
             }
+        }
+        function check(){
+            var doit = true;
+            for(var i = 0,len = ids.length;i<len;i++){
+                var v = ids[i].replace('/','.');
+                if(!Module.defined(v)){
+                    doit = false;
+                    break;
+                }
+            }
+            if(doit){
+                callback();                 
+            }else{
+                moduleQueue.fire();
+                moduleQueue.push(check);
+            }            
+        
         }
     }
     /**
@@ -492,10 +511,37 @@
      * @param  {[type]}   charset  [description]
      * @return {[type]}            [description]
      */
-    var regISCSS = /\.css(?:\?|$)/i;
 
     function load(url, callback, fail, charset) {
-        regISCSS.test(url) ? loadJS(url, callback, fail, charset) : loadCSS(url, callback);
+        if($.isArray(url)) {
+            var queue = [],
+                cb = function() {
+                    var file = queue.shift();
+
+                    if(queue.length === 0) {
+                        callback();
+                    }
+                }
+            each(url, function(v, i) {
+
+                queue.push(v);
+                _load(v, cb, fail, charset);
+            })
+        } else {
+            _load(url, callback, fail, charset);
+        }
+
+        // regISCSS.test(url) ? loadCSS(url, callback):loadJS(url, callback, fail, charset);
+    }
+
+    function _load(url, callback, fail, charset) {
+        var arr = getPath(url),
+            url = arr[0];
+        if(arr[1] === 'css') {
+            loadCSS(url, callback)
+        } else {
+            loadJS(url, callback, fail, charset);
+        }
     }
     /**
      * 加载js
@@ -697,7 +743,6 @@
     //7 DEBUG 调试消息
     //
 
-
     function log(str, showInPage, level) {
 
         if($.isNumber(showInPage)) {
@@ -715,7 +760,7 @@
                 div.className = 'MixJS_log';
                 div.innerHTML = str + ''; //确保为字符串
                 DOC.body.appendChild(div)
-            } else if(global.console) {
+            } else if(global.console && global.console.log) {
                 global.console.log(str);
             }
         }

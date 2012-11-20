@@ -5,25 +5,18 @@
     <title></title>
 </head>
 <body>
-    <!--
-    var abc = function(){$.require('a,b',function(){
-        console.log('lazy require callback fire!');
-    });}
-    /require\s*\(\s*["']([^"']+)["']\s*\)|(?:[^\\]?)(["'])/g.exec(abc.toString())
-    -->
+
     <script type="text/javascript" src="../mix.js" name="$" debug="true"></script>
     <script type="text/javascript">
     var h = location.href;
     MixJS.config({path:h,preload:['a']});
-    MixJS.use('testLazy',function(){alert('success and over');});
+    </script>
+    <!--script type="text/javascript" src="testLazy.js"></script-->
+    <script type="text/javascript">
+    
+    MixJS.use('testModules/testA',function(){alert('success and over');});
 
-    MixJS.use('testLazy,testModules/testA',function(){
-        $.testLazy();
-        alert('success 1');
-    }).use('testLazy,testModules/testB',function(){
-        $.testModules.testB();
-        alert('success 2');
-    });
+    
     
     </script>
 </body>

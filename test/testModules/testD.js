@@ -1,7 +1,7 @@
 MixJS.define('testModules.testD',function($){
-    console.log('test D loaded','no fire');
+    $.log('test D loaded','no fire');
     
     return function(){
-        console.log('i am testD');
+        alert('i am testD');
     };
 })
