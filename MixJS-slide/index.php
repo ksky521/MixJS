@@ -6,7 +6,7 @@ $version = '20121105';
 <head>
     <meta charset="UTF-8">
     <!--<meta name="viewport" content="width=device-width, initial-scale=1.0" />-->
-    <title>风行前端架构设计的思考</title>
+    <title>MixJS设计的思考</title>
     <link rel="stylesheet" href="css/mixjs.css?v=<?=$version?>" />
     <link rel="stylesheet" media="only screen and (max-device-width: 480px)" href="css/iphone.css">
     <?php    
@@ -38,6 +38,7 @@ $version = '20121105';
 
             <li>向上翻页：← ↑ 及pageUp键</li>
             <li>向下翻页：→ ↓ 及pageDown键</li>
+            <li>Q键：开启/关闭 二维码页面</li>
             <li>P键：开启画板 / C键：清空画板</li>
             <li>F键：开启/关闭 全屏</li>
             <li>N键：开启/关闭 备注笔记（限有备注页）</li>
@@ -47,9 +48,9 @@ $version = '20121105';
             <li>Ctrl+(-)键：缩放页面，Ctrl+0还原100%比例页面</li>
             <li>触摸设备支持左右滑屏进行翻页</li>
         </ul>
-        <p>如果选择打开配置webSocket控制功能，控制端访问：url?ctrl=1，就可以实现控制功能:</p>
+        <p>如果选择打开配置webSocket控制功能，手机通过扫描二维码，可以实现控制功能:</p>
         <ul>
-            <li>命令进入nodejs文件夹，运行：node websocket.js开启websocket功能</li>
+            <li>命令进入nodejs文件夹，运行：node server.js开启websocket功能</li>
             <li>控制端简化界面操作，带有下页预览，实时备注和控制按钮</li>
             <li>同websocket来通信，完成控制，所以需要浏览器支持websoket功能</li>
             <li>所有外部暴露函数采用代理方式，控制端执行则发送到client执行</li>
@@ -59,35 +60,33 @@ $version = '20121105';
 <section class="help" id="qrcodeContainer">
     <article class="flexbox vcenter">
         <h1>扫描二维码，就能控制</h1>
-        <div id="qrcode" style="width:256px;height:256px;">
-            
+        <div id="qrcode" style="width:256px;height:256px;">            
         </div>
     </article>
 </section>
     <section class="slides" id="container">
             <section class="slide title-slide segue" style="background:url(./bg/Maldives_Travel_02001.jpg) no-repeat center center">
                 <hgroup class="auto-fadein">
-                  <h1>风行前端架构设计的思考</h1>
-                  <p>Theowang<br/>华北互动广告开发组</p>
+                  <h1>MixJS设计的思考</h1>
+                  <p>三水清</p>
                 </hgroup>
             </section>
             <section class="slide" style="background:url(./bg/Maldives_Travel_01004.jpg) no-repeat center center">
-                <article class="flexbox vcenter"><h1 class="yellow fsize42 reflect">了解风行产品特点</h1></article>
+                <article class="flexbox vcenter"><h1 class="yellow fsize42 reflect">了解MixJS产生的背景</h1></article>
             </section>
             <section class="slide">
                 <aside class="note">
                   <section>
                     <ul>
-                    <li>风行跟开放平台一样，是活动开发平台</li>
-                    <li>都是给第三方网站使用</li>
-                    <li>但是第三方网站真的很乱</li>
-                    <li>有的甚至没有head、title经常没有</li>
+                    <li>面向模块化开发</li>
+                    <li>保证代码安全不受干扰</li>
+                    <li>但是第三方网站可能真的很乱</li>
                     </ul>
                   </section>
                 </aside>
                 <hgroup>
-                   <h2>风行产品特点</h2>  
-                   <h3>风行是提供常用活动代码组件，放入到活动页面使用，属于放入第三方网站执行的代码</h3>                     
+                   <h2>MixJS产生的背景</h2>  
+                   <h3>MixJS是个前端模块化管理的东东，提供模块管理、打包、解耦机制等</h3>                     
                 </hgroup>   
                 <h4 class="build"><span>第三方网站可能很脏很乱</span></h4>              
                 <ul class="build">                            
@@ -162,7 +161,7 @@ $version = '20121105';
             </section>
             <section class="slide">
                 <hgroup>
-                    <h2>风行架构思考 1</h2>
+                    <h2>MixJS思考 1</h2>
                     <h3>功能交集可以通过模块划分来解决</h3>
                 </hgroup>
                 <article>                       
@@ -272,13 +271,13 @@ $version = '20121105';
             </section>
             <section class="slide">
                 <hgroup>
-                    <h2>fx.js代码示例</h2>
+                    <h2>MixJS代码示例</h2>
                     <h3><a href="https://github.com/amdjs/amdjs-api/wiki/AMD">AMD规范</a>的模块定义</h3>
                 </hgroup>
                 <article>   
                     <pre class="prettyprint" data-lang="javascript">
 //定义，第二个参数除了依赖模块，还可以为css样式表
-FX.define('test', ['tool/cookie', 'js/at'], function($){
+MixJS.define('test', ['tool/cookie', 'js/at'], function($){
     var a = 1;
     //固定形式，return出的就是模块内容
     <b>return function(){
@@ -288,8 +287,8 @@ FX.define('test', ['tool/cookie', 'js/at'], function($){
         alert(c);
     }</b>
 });
-//加载
-FX.require('a.js', callback);
+//使用模板
+MixJS.use('test', callback);
 </pre>
     </article>
                                  
@@ -304,11 +303,9 @@ FX.require('a.js', callback);
                 </hgroup>
                 <article>                     
                     <pre class="prettyprint" data-lang="javascript">
-//直接传入参数，标准调用方式
-<b>FX.use('moduleName', {appkey:'xxx', title:'xxx'});</b>
 //回调调用，个性化定制
-FX.use('moduleName', function(){
-    FX.moduleName.init({appkey:'xxx'}).show();
+MixJS.use('moduleName', function($){
+    $.moduleName.init({appkey:'xxx'}).show();
 });</pre>
                     
                 </article>
@@ -327,9 +324,9 @@ FX.use('moduleName', function(){
                     
                     <pre class="prettyprint" data-lang="javascript">
 //A组件调用，传入参数为一个对象，代码如下
-FX.use('A', {appkey:'xxx', title:'xxx'});
+MixJS.use('A', function($){});
 //那么fx加载A模块的js文件
-FX.define('A',['tool/cookie', 'css/a.css'],maker);
+MixJS.define('A',['tool/cookie', 'css/a.css'],maker);
 //发现有依赖模块（cookie）和文件（a.css）
 //此时A并未没达到初始化的条件
 //callsafe发挥作用，保存上下文、作用域、参数
@@ -413,7 +410,7 @@ FX.builder(html, {
             </section>
             <section class="slide">
                 <hgroup>
-                    <h2>EventBus模型：FX.event.broadcast</h2>
+                    <h2>EventBus模型：MixJS.event.broadcast</h2>
                     <h3 class="build"><span>模块间实现广播事件，模块重要事件发送广播，其他模块可订阅广播事件</span> </h3>
                 </hgroup>
                 <article class="build">
@@ -441,7 +438,7 @@ publisher.send(data,function(json){
                   </section>
                 </aside>
                 <hgroup>
-                    <h2>EventBus模型：FX.event.broadcast</h2>
+                    <h2>EventBus模型：MixJS.event.broadcast</h2>
                 </hgroup>
                 <article>
                     <b>文艺青年：</b>
@@ -450,43 +447,18 @@ publisher.send(data,function(json){
 publisher.send(data,function(json){
     //做一些清理工作，例如清除textarea内容等
     //派发广播
-    <b>FX.event.broadcast.fire('publisher.send', json);</b>
+    <b>MixJS.event.broadcast.fire('publisher.send', json);</b>
 });
 
 //topicList内部===>话题列表订阅广播
-<b>FX.event.broadcast.on('publisher.send', function(data){
+<b>MixJS.event.broadcast.on('publisher.send', function(data){
     topicList.add(json);
 });</b>
 </pre>  
                 </article>
                 <p class="build"><span>通过文艺的解耦手法，即使我没有话题列表功能，也不再影响到发布框功能</span></p>
             </section>
-            <section class="slide">
-                <hgroup>
-                    <h2>组件标准化</h2>
-                    <h3 class="build"><span>降低学习成本，符合行业规范和用户（开发者）习惯，便于聚拢用户，打开市场</span></h3>
-                </hgroup>
-                <article>   
-                    <ul class="build">
-                        <li>参数标准化</li>
-                        <li>命名标准化</li>
-                        <li>使用方法一致性</li>
-                        <li>后端接口一致性</li>
-                    </ul>                        
-                </article>
-            </section>
-            <section class="slide">
-                <hgroup>
-                    <h2>组件个性化</h2>
-                    <h3 class="build"><span>最小成本的满足个性化定制需求</span></h3>
-                </hgroup>
-                <article>                                       
-                    <ul class="build">
-                        <li>各个组件中的发布框（转播评论）按钮定制</li>
-                        <li>改版换皮肤成本</li>
-                    </ul>
-                </article>
-            </section>
+            
             <section class="slide">
                 <hgroup>
                     <h2>打包工具</h2>
