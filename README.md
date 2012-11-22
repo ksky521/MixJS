@@ -5,7 +5,7 @@ MixJS
 
 MixJS还在开发阶段。。。。
 
-0.1开发完成了，不得不承认0.1的确有点乱，所以整理了思绪，整理了0.2的思维导图。。。开始0.2的开发计划
+0.1开发完成了，不得不承认0.1的确有点乱，所以整理了思绪。。。开始0.2的开发计划
 
 * 模块加载不是单纯的文件加载，需要根据模块规范来写模块哦~
 
@@ -15,7 +15,7 @@ MixJS还在开发阶段。。。。
 
 * MixJS.define(moduleName, dependencies, factory)
 
-> `moduleName` 为模块名称，不同于其他模块加载，这里的目录间隔符是 `.`
+> `moduleName` 为模块名称
 
 > `dependencies` 数组，或者 `,` 间隔的String
 
@@ -25,7 +25,7 @@ MixJS还在开发阶段。。。。
 
 例如：
 
-    MixJS.define('testModules.testA',['testModules/testB','testModules/testC'],function($){
+    MixJS.define('testModules/testA',['testModules/testB','testModules/testC'],function($){
         $.log('test A loaded','fire testB testC');
         $.testModules.testB();
         $.testModules.testC();
@@ -36,13 +36,13 @@ MixJS还在开发阶段。。。。
 
 推荐一个模块为一个文件，再次强调模块：文件定义严格按照下面的规范：
 
-> 1、 `moduleName` 为 `.` 间隔的文件路径，例如： `test.A` ，对应的路径是 `test/A.js`，而调用使用 `MixJS.test.A`
+> 1、 `moduleName` 例如： `test/A` ，对应的路径是 `test/A.js`，而调用使用 `MixJS.test.A`
 
-> 2、 `dependencies` 中的值为文件路径格式，例如： `test/A`，对应的文件 `test/A.js` 中的define第一个参数（`moduleName` ）就是 `test.A`
+> 2、 `dependencies` 中的值为文件路径格式，例如： `test/A`，对应的文件 `test/A.js` 中的define第一个参数（`moduleName` ）就是 `test/A`
 
 #### 为什么这样做？
 
-MixJS中define过程实际是一个创建命名空间的过程，所以第一个参数 `moduleName` 是个命名空间的范畴，所以用 `.` 间隔，这样有利于相同模块分到同一父模块，这样模块的划分和文件夹结构就形成一一映射关系，例如：`MixJS.array.forEach` 和 `MixJS.array.indexOf` 同属于 `MixJS.array`，并且分别定义在于 `array` 文件夹下的 `forEach.js` 和 `indexOf.js` 中。
+MixJS中define过程实际是一个创建命名空间的过程，所以第一个参数 `moduleName` 是个命名空间的范畴，所以用 `/` 间隔，这样有利于相同模块分到同一父模块，这样模块的划分和文件夹结构就形成一一映射关系，例如：`MixJS.array.forEach` 和 `MixJS.array.indexOf` 同属于 `MixJS.array`，并且分别定义在于 `array` 文件夹下的 `forEach.js` 和 `indexOf.js` 中。
 
 另外统一的规范，有利于文件重复加载的判断。
 
@@ -79,7 +79,6 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 	MixJS.config({
 		path: '路径，否则以MixJS的url为准',
 		debug: true,
-        preload: [],//首先加载的基础文件
 		charset: '模块js编码'
 	});
 
@@ -89,7 +88,6 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 
 	MixJS.defined：判断模块是否定义
 	MixJS.each：数组遍历
-    MixJS.log：类似config.log
 	MixJS.mix：杂糅
 	MixJS.load：加载js、css
 	MixJS.loadJS：加载js
@@ -102,7 +100,7 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 
 ## packageTool
 
-已经完成
+已经完成，详见packageTool
 
 nodejs上线打包工具
 

@@ -8,9 +8,11 @@
  */
 error_reporting(0);
 
+$root = '/';//配置根目录
+
 $DEBUG = true;
 //$DEBUG = false;
-define('ROOT', dirname(__FILE__).'/test/');//此处是为了测试用的，如果是根目录可以去掉test/
+define('ROOT', dirname(__FILE__).$root);
 
 // $MATCHED = array();
 
@@ -63,7 +65,8 @@ function importFile($files, $fileType = '.js'){
     }
 
     foreach($files as $file){
-        $file = str_replace('.', '/', $file) . $fileType;
+        // $file = str_replace('.', '/', $file) . $fileType;
+        $file .= $fileType;
 
         if(!in_array($file, $IMPORTED)){
             $IMPORTED[] = $file;

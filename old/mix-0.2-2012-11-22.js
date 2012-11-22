@@ -59,7 +59,39 @@
         _modulesMap = {}; //1：定义之前 2：等待依赖关系中 3：定义完成
     var $ = {
         VERSION: VERSION,
-        
+        // require: function(files, callback) {
+
+        //     files = dealArr(files);
+
+        //     if(files.length === 0) {
+        //         $.isFunction(callback) && callback();
+        //         return this;
+        //     }
+
+        //     var temp = [];
+        //     each(files, function(v) {
+        //         //先获取url，在判断是否已经加载过了
+        //         var arr = getPath(v),
+        //             ext = arr[1],
+        //             url = arr[0];
+
+        //         if(!loaded(url)) {
+        //             temp.push(url);
+        //             var cb = function() {
+        //                     _filesMap[url] = 3;
+        //                     temp.pop();
+        //                     if(temp.length === 0) {
+        //                         callback();
+        //                         temp = null;
+        //                     }
+        //                 };
+        //             ext === 'css' ? loadCSS(url, cb) : loadJS(url, cb);
+        //         }
+
+        //     });
+
+        //     return this;
+        // },
         use: function(names, callback) {
             names = dealArr(names);
             if(names.length === 0) {
@@ -121,6 +153,7 @@
             new Module(name, deps, factory)
             return this;
         },
+        // alias: function() {},
         config: function(cfg) {
 
             config = mix(config, cfg);
