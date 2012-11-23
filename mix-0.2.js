@@ -47,19 +47,40 @@
             };
 
     var config = {
-        path: PATH,
-        perload: _emptyArr,
-        //预先加载库
-        debug: isDebug,
-        charset: CHARSET
-    },
+            path: PATH,
+            perload: _emptyArr,
+            //预先加载库
+            debug: isDebug,
+            charset: CHARSET
+        },
+        alias = {},
+        regAlias = /^[-\w\d_$]{2,}$/i,
         _moduleDepsMap = {},
         _filesMap = {},
         //1:加载之前，2:加载中，3:加载完成
         _modulesMap = {}; //1：定义之前 2：等待依赖关系中 3：定义完成
     var $ = {
         VERSION: VERSION,
-        
+        /**
+         * 别名机制
+         * @param  {String} name 名字
+         * @param  {String} realpath  别名真实url
+         * @return {[type]}      [description]
+         */
+        alias: function(name,arr){
+            if(regAlias.test(name)){
+                if($.isUndefined(arr)){
+                    return alias[name];
+                }else{
+                    arr = String(arr);
+                    alias[name] = arr;
+                    return this;
+                }
+
+            }else{
+                throw new Error('MixJS.alias name error');
+            }
+        },
         use: function(names, callback) {
             names = dealArr(names);
             if(names.length === 0) {
@@ -342,11 +363,14 @@
      * @return {[type]}     [description]
      */
 
-    function getPath(url, root, ret) {
+    function getPath(url, root) {
+        var ret;
+        
         root = root || config.path;
-
         root = root.substr(0, root.lastIndexOf('/'));
-        if(regProtocol.test(url)) { //如果用户路径包含协议
+        if(regAlias.test(url) && alias[url]){
+            ret = alias[url];
+        }else if(regProtocol.test(url)) { //如果用户路径包含协议
             ret = url
         } else {
             var tmp = url.charAt(0),
