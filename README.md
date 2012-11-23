@@ -17,7 +17,7 @@ MixJS还在开发阶段。。。。
 
 > `moduleName` 为模块名称
 
-> `dependencies` 数组，或者 `,` 间隔的String
+> `dependencies` 数组
 
 > `factory` 工厂函数，是个闭包函数，return是实际 `moduleName` 的主体，会被绑定到MixJS上，即： `MixJS.moduleName`
 

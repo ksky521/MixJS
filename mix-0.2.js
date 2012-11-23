@@ -1,4 +1,4 @@
-(function(global, DOC, undefined) {
+;(function(global, DOC, undefined) {
     var VERSION = '0.2',
         curScriptNode = (function(scripts, node) {
             scripts = DOC.getElementsByTagName('script');
@@ -36,15 +36,15 @@
          * @return {[type]}            [description]
          */
         each = [].forEach ?
-    function(arr, callback, scope) {
-        [].forEach.call(arr, callback, scope);
-    } : function(arr, callback, scope) {
-        for(var i = 0, len = arr.length; i < len; i++) {
-            if(i in arr) {
-                callback.call(scope, arr[i], i, arr);
-            }
-        }
-    };
+            function(arr, callback, scope) {
+                [].forEach.call(arr, callback, scope);
+            } : function(arr, callback, scope) {
+                for(var i = 0, len = arr.length; i < len; i++) {
+                    if(i in arr) {
+                        callback.call(scope, arr[i], i, arr);
+                    }
+                }
+            };
 
     var config = {
         path: PATH,
