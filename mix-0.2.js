@@ -166,7 +166,7 @@
 
 
     //基本类型判断
-    'Function,String,Array,Date,RegExp,Number'.replace(reg, function(t) {
+    'Function,String,Array,Date,Number'.replace(reg, function(t) {
         $['is' + t] = function(s) {
             return isType(s, t)
         }
