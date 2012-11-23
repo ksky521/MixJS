@@ -78,7 +78,7 @@
                 }
 
             }else{
-                throw new Error('MixJS.alias name error');
+                throw new Error('MixJS.alias name 格式错误');
             }
         },
         use: function(names, callback) {
@@ -127,7 +127,7 @@
         },
         define: function(name, deps, factory) {
             if(!$.isString(name)) {
-                throw new Error('MixJS.define: name must a string');
+                throw new Error('MixJS.define: name 必须为字符串');
                 return;
             }
             if($.isFunction(deps)) {
@@ -242,8 +242,12 @@
 
         for(var i = 0, len = arr.length; i < len; i++) {
             var m = arr[i];
-
-            if(m === 1) {
+            if(m===module){
+                throw new Error(module + '： 发现循环依赖');
+                break;
+            }
+            if(obj[m] === 1) {
+                //简单去重，不能保证二次依赖去重复
                 continue;
             }
             var temp = _moduleDepsMap[m];
@@ -278,7 +282,7 @@
         this.deps = deps; //必须是数组
         this.maker = maker;
         this.root = root || $;
-
+        // _modulesMap[id] = 1;//定义之前
         // this.queue = new Queue();
         if(checkDeps(id)) {
 
@@ -308,7 +312,7 @@
         if(!this.id) {
             return;
         }
-
+        // _modulesMap[this.id] = 2;//定义等待中，可能因为依赖关系没有加载而处于等待中
         if(!checkDeps(this.id)) {
             return;
         }
@@ -334,7 +338,7 @@
                         }
                     } catch(e) {
                         // Module._definedModulesMap[this.id] = 2;//模块定义可能出错了
-                        throw new Error('Module.namespace:id=>' + this.id + ',info=>' + e.message);
+                        throw new Error('Module.namespace error:id=>' + this.id + ',info=>' + e.message);
                     }
                 }
             }
