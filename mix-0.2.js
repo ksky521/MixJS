@@ -101,14 +101,16 @@
                         //_modulesMap[v] = 3;
                         _filesMap[url] = 3;
                         temp.pop();
+
                         if(temp.length === 0) {
                             var t = function() {
+
                                     if(defined(v)) {
+
                                         callback();
 
                                     } else {
                                         var q = Queue.useCallback[v];
-
                                         q = q ? q : (Queue.useCallback[v] = new Queue(v));
 
                                         q.push(arguments.callee);
@@ -155,17 +157,35 @@
             return loaded(url);
         },
         mix: mix,
-        each: each
+        each: each,
+        noConflict:function(){
+            return this;
+        }
     };
 
 
 
     //基本类型判断
-    'Function,String,Object,Array,Undefined,Boolean,Number'.replace(reg, function(t) {
+    'Function,String,Array,Date,RegExp,Number'.replace(reg, function(t) {
         $['is' + t] = function(s) {
             return isType(s, t)
         }
     });
+
+    if(typeof(/./) !== 'function') {
+        $.isFunction = function(obj) {
+            return typeof obj === 'function';
+        };
+    }   
+
+
+    $.isBoolean = function(obj) {
+        return obj === true || obj === false || isType(obj,'Boolean')
+    };
+
+    $.isUndefined = function(obj) {
+        return obj === void 0;
+    };
 
 
     //释放到window
@@ -179,6 +199,7 @@
      */
 
     function defined(module) {
+
         return _modulesMap[module] === 3;
     }
     /**
@@ -331,6 +352,7 @@
                     try {
                         var f = $.isFunction(this.maker) && this.maker(this.root);
                         if(f) {
+
                             f['@GOD'] = 'THEO'; //加个尾巴~
                             root[name] = f;
                             _modulesMap[this.id] = 3;
@@ -549,7 +571,7 @@
 
         if($.isFunction(fail)) {
             node.onerror = jsGetCallback(node, fail);
-            node.onload = node.onreadystatechange = jsGetCallback(callback);
+            node.onload = node.onreadystatechange = jsGetCallback(node, callback);
         } else {
             node.onload = node.onerror = node.onreadystatechange = jsGetCallback(node, callback);
         }
@@ -558,18 +580,18 @@
     //js可以检测error，所以加上了这个函数
 
     function jsGetCallback(node, cb) {
-        return function() {
-            if(regJSLOAD.test(node.readyState)) {
-                // alert(node.src);
-                // Ensure only run once and handle memory leak in IE
+        return function(e) {
+            e = e || global.event;
+            
+            if(e.type === 'load' || regJSLOAD.test(node.readyState)) {
+                
+                //确保执行一次+内存回收
                 node.onload = node.onerror = node.onreadystatechange = null
 
-                // Remove the script to reduce memory leak
                 if(node.parentNode && !config.debug) {
                     HEAD.removeChild(node)
                 }
-
-                // Dereference the node
+            
                 node = undefined
 
                 cb()
