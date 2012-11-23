@@ -4,7 +4,7 @@
  * @param  {[type]}
  * @return {[type]}
  */
-MixJS.define('module.slide',['module/qrcode'], function(F) {
+MixJS.define('module/slide',['module/qrcode'], function(F) {
     var $win = window,
         $doc = document;
     var controlUID;

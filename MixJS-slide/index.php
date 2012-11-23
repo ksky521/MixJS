@@ -6,7 +6,7 @@ $version = '20121105';
 <head>
     <meta charset="UTF-8">
     <!--<meta name="viewport" content="width=device-width, initial-scale=1.0" />-->
-    <title>MixJS设计的思考</title>
+    <title>FX设计的思考</title>
     <link rel="stylesheet" href="css/mixjs.css?v=<?=$version?>" />
     <link rel="stylesheet" media="only screen and (max-device-width: 480px)" href="css/iphone.css">
     <?php    
@@ -67,7 +67,7 @@ $version = '20121105';
     <section class="slides" id="container">
             <section class="slide title-slide segue" style="background:url(./bg/Maldives_Travel_02001.jpg) no-repeat center center">
                 <hgroup class="auto-fadein">
-                  <h1>MixJS设计的思考</h1>
+                  <h1>FX设计的思考</h1>
                   <p>三水清</p>
                 </hgroup>
             </section>
@@ -555,7 +555,7 @@ if($isControl){
 <?php
 }
 ?>
-    <script type="text/javascript" src="../mix.js"></script>
+    <script type="text/javascript" src="../mix-0.2.js"></script>
     <script type="text/javascript">
     MixJS.loadJS('js/prettify.js',function(){
         prettyPrint();

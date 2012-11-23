@@ -5,7 +5,7 @@
  * @param  {[type]} $) {					function QR8bitByte(data [description]
  * @return {[type]}    [description]
  */
-MixJS.define('module.qrcode', function(MixJS) {
+MixJS.define('module/qrcode', function(MixJS) {
 
 
 

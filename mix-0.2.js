@@ -80,6 +80,7 @@
             }else{
                 throw new Error('MixJS.alias name 格式错误');
             }
+            return this;
         },
         use: function(names, callback) {
             names = dealArr(names);
@@ -87,7 +88,7 @@
                 $.isFunction(callback) && callback();
                 return this;
             }
-            var temp = [];
+            var temp = [], self = this;
             each(names, function(v) {
                 var arr = getPath(v),
                     ext = arr[1],
@@ -107,7 +108,7 @@
 
                                     if(defined(v)) {
 
-                                        callback();
+                                        callback(self);
 
                                     } else {
                                         var q = Queue.useCallback[v];
