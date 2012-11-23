@@ -6,7 +6,7 @@
  * @author  theowang
  * $Id: broadcast.js 65871 2012-11-05 01:51:42Z theowang $
  */
-MixJS.define('event.broadcast',function($){
+MixJS.define('event/broadcast',function($){
     var _cache = {};
     var broadcast = {
         
