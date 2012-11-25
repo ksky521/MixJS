@@ -123,3 +123,6 @@ nodejs上线打包工具
 作者博客：[js8.in](http://js8.in)
 
 作者新浪微博：[@三水清](http://weibo.com/sanshuiqing)
+
+## LICENCE
+* 本软件采用 `BSD` 开源协议，细节请阅读项目中的 `LICENSE.BSD` 文件内容。
