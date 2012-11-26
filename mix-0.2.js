@@ -383,6 +383,8 @@
         //协议
         regISJS = /\.js$/,
         //是否为js
+        regRelative = /\.\.\//g,
+        //相对路径处理
         regEXT = /\.(\w+)$/; //后缀
     /**
      * 获取真实url
@@ -392,7 +394,7 @@
 
     function getPath(url, root) {
         var ret;
-        
+
         root = root || config.path;
         root = root.substr(0, root.lastIndexOf('/'));
         if(regAlias.test(url) && alias[url]){
@@ -409,7 +411,8 @@
                 ret = root + '/' + url.substr(2);
             } else if(_2 === '..') { //相对于父路径
                 var arr = root.replace(/\/$/, '').split('/');
-                tmp = url.replace(/\.\.\//g, function() {
+                regRelative.lastIndex = 0;
+                tmp = url.replace(regRelative, function() {
                     arr.pop();
                     return '';
                 });
