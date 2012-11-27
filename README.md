@@ -102,13 +102,14 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 
 除此之外提供了：  
 
+    MixJS.noConflict：命名冲突，返回MixJS对象
+    MixJS.loaded：判断一个文件是否加载
 	MixJS.defined：判断模块是否定义
 	MixJS.each：数组遍历
 	MixJS.mix：杂糅
-	MixJS.load：加载js、css
 	MixJS.loadJS：加载js
 	MixJS.loadCSS：加载css
-	MixJS.isFunction等类型判断方法
+	MixJS.isFunction等基本类型判断方法
 
 ## import.php
 	
@@ -129,6 +130,7 @@ nodejs上线打包工具，可以查找依赖关系，例如处理下面的代�
     })
 
 处理后：
+
     MixJS.define('mod/B', function($){
         //
     });
