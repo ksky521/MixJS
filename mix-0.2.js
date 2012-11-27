@@ -186,7 +186,8 @@
     };
 
     $.isUndefined = function(obj) {
-        return obj === void 0;
+        return obj === undefined;
+        //return obj === void 0;
     };
 
 
@@ -754,4 +755,4 @@
         }
         return target;
     }
-}(window, document, undefined));
+}(window, document));
