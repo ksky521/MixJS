@@ -54,9 +54,9 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 
 > callback：回调函数
 
-例如：    
-    MixJS.use('testLazy', function(){alert('success and over');});
+例如： 
 
+    MixJS.use('testLazy', function(){alert('success and over');});
     MixJS.use('testLazy,testModules/testA',function(){
         $.testLazy();
         alert('success 1');
@@ -75,9 +75,9 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 
 > realurl：模块真实的url地址，假如为空，则返回别名的真实url
 
-例如：    
-    MixJS.alias('h-css', '../test/h1.css');
+例如： 
 
+    MixJS.alias('h-css', '../test/h1.css');
     MixJS.use('h-css,testModules/testA',function(){        
         alert('success');
     })
