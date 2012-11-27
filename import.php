@@ -2,13 +2,14 @@
 /**
  * f为文件地址
  * path路径
- * type为css或者js，目前只用js
+ * type为css或者js
+ * 部分写法参考百度tangram框架的import.php
  * IE下，get请求不能超过2083字节，请注意。
  * @author theowang
  */
 error_reporting(0);
 
-$root = '/';//配置根目录
+$root = '/test-0.2/';//配置根目录
 
 $DEBUG = true;
 //$DEBUG = false;
@@ -49,13 +50,13 @@ header ($expire);
 
 /**************************合并输出文件********************/
 
-$content = importFile(explode(',', $_GET['f']), $type);
-echo implode(";\n", $content);
+$content = importFile(explode(',', $_GET['f']), $type, false);
+echo $content;
 
 
-function importFile($files, $fileType = '.js'){
+function importFile($files, $fileType = '.js', $fromFile = true){
     global $DEBUG, $IMPORTED, $topFileType;
-    $output = array();
+    $output = '';
     
 
     if(is_string($files)){
@@ -70,15 +71,27 @@ function importFile($files, $fileType = '.js'){
 
         if(!in_array($file, $IMPORTED)){
             $IMPORTED[] = $file;
+            $fileComments = "\n/**********************\n".
+                            '* import.php 加载文件--->'.$file."\n".
+                            "**********************/\n";
 
-            $content = getFileContents($file);
+            $content = $fileComments.getFileContents($file);
+           
             if(empty($content)){
-                $content = 'alert("'.$file.'：内容为空或者没有找到文件")';
-            }
-            if($fileType == '.js'){
-                //如果是js文件
-                preg_match_all("/\.define\s*\([\"\']([^\"\']+)[\"\']\s*,\s*[\[](.+?)[\]]\s*,\s*function/es", $content, $matches);
+                if($DEBUG){
+                    $output .= $topFileType=='.js'?'alert("'.$file.'：内容为空或者没有找到文件")':'/*文件'.$file.'内容为空*/';    
+                }                
 
+            }elseif($fileType !=$topFileType){
+                // $content = 'document.write("<style>'.$content.'</style>")';
+                // var_dump($content);
+                
+                $output .= '/*出现不同类型文件：'.$file.'*/';
+
+            }elseif($fileType == '.js'){
+                //如果是js文件
+                preg_match_all("/\.define\s*\([\"\']([^\"\']+)[\"\']\s*,\s*[\[](.+?)[\]]\s*,\s*function/s", $content, $matches);
+                // $r = dirname($file).'/'; 
                 // var_dump($matches);
                 if(isset($matches[2])){
                     foreach($matches[2] as $val){
@@ -101,24 +114,24 @@ function importFile($files, $fileType = '.js'){
                                     $type = '.js';
                                 }
                             }
-                            // var_dump($v);
                             // var_dump(importFile($v, $type));
-                            $output = array_merge($output, importFile($v, $type)) ;
+                            $output .= importFile($v, $type);
+
                         }                        
                     }
                 }
-            }elseif($fileType == '.css' && $topFileType == '.js'){
-                // $content = 'document.write("<style>'.$content.'</style>")';
-                // var_dump($content);
-                $content = 'alert("'.$file.':是css文件")';
+
+                $output .= $content;
+            }elseif($fileType==='.css'){
+                $r = dirname($file).'/';                
+                
+                $output .= preg_replace("/\@import\s+(url\s?\()?[\"\']?(.+?).css[\"\']?[\);]{0,2}/ie", "importFile(\$r.\"$2\",\".css\",true)", $content)."\n";
+                
             }
             
-            echo "/**********************\n";
-            echo '* 加载文件--->'.$file."\n";
-            echo "**********************/\n\n";
-            $output[] = $content;
         }
     }
+    // var_dump($output);
     return $output;
 }
 /**

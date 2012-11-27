@@ -257,7 +257,8 @@
 
     function checkDeps(module) {
         var arr = _moduleDepsMap[module];
-        if(!arr) {
+        
+        if(!arr || arr.length===0) {
             return true;
         }
         var obj = {},
@@ -265,6 +266,7 @@
 
         for(var i = 0, len = arr.length; i < len; i++) {
             var m = arr[i];
+            
             if(m===module){
                 throw new Error(module + '： 发现循环依赖');
                 break;
@@ -273,6 +275,27 @@
                 //简单去重，不能保证二次依赖去重复
                 continue;
             }
+            
+            if(regAlias.test(m) && alias[m]){
+                //如果是alias模块
+                if(loaded(alias[m])){
+                    obj[m] = 1;
+                    continue;
+                }
+                back = false;
+                break;
+            }
+            
+            if(regISCSS.test(m)){
+                //如果是css文件
+                if(loaded(getPath(m)[0])){
+                    obj[m] = 1;
+                    continue;
+                }
+                back = false;
+                break;             
+            }
+
             var temp = _moduleDepsMap[m];
 
             if(temp && !(back = checkDeps(m))) {
@@ -337,6 +360,7 @@
         }
         // _modulesMap[this.id] = 2;//定义等待中，可能因为依赖关系没有加载而处于等待中
         if(!checkDeps(this.id)) {
+
             return;
         }
 
@@ -382,13 +406,16 @@
 
     var regProtocol = /^(\w+)(\d)?:.*/,
         //协议
-        regISJS = /\.js$/,
+        regISJS = /\.js$/i,
         //是否为js
+        regISCSS = /\.css$/i,
+        //是否为css
         regRelative = /\.\.\//g,
         //相对路径处理
         regEXT = /\.(\w+)$/; //后缀
     /**
      * 获取真实url
+     * 来自massframework
      * @param  {[type]} url [description]
      * @return {[type]}     [description]
      */
