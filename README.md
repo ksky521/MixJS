@@ -86,8 +86,9 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 
 	<script type="text/javascript" src="mix.js" name="$" debug="true"></script>
 
-* name：MixJS的全局名称，默认是MixJS
-* debug：是否调试
+> name：MixJS的全局名称，默认是MixJS
+
+> debug：是否调试
 
 ## 配置
 
@@ -111,13 +112,34 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 
 ## import.php
 	
-配合.htaccess文件，完成js文件url重写，通过php实时合并js，减少请求数
+配合.htaccess文件，完成css、js文件url重写，通过php实时合并js和css，减少请求数
+
+可以合并的情况如下：
+
+> css文件：@import url('css/a.css');
+
+> MixJS define模块文件：`MixJS.define('mod/A', ['mod/B', 'mod/C'], function($){})`
 
 ## packageTool
 
-已经完成，详见packageTool
+nodejs上线打包工具，可以查找依赖关系，例如处理下面的代码：
 
-nodejs上线打包工具
+    MixJS.define('mod/A', ['mod/B', 'mod/C'], function($){
+        return {};
+    })
+
+处理后：
+    MixJS.define('mod/B', function($){
+        //
+    });
+    MixJS.define('mod/C', function($){
+        //
+    });
+    MixJS.define('mod/A', function($){
+        return {};
+    })
+
+详见packageTool/README.md
 
 ## 联系方式
 
@@ -126,4 +148,5 @@ nodejs上线打包工具
 作者新浪微博：[@三水清](http://weibo.com/sanshuiqing)
 
 ## LICENCE
-* 本软件采用 `BSD` 开源协议，细节请阅读项目中的 `LICENSE.BSD` 文件内容。
+
+本软件采用 `BSD` 开源协议，细节请阅读项目中的 `LICENSE.BSD` 文件内容。
