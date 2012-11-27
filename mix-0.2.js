@@ -413,7 +413,7 @@
         //是否为css
         regRelative = /\.\.\//g,
         //相对路径处理
-        regEXT = /\.(\w+{2,3})$/; //后缀2~4
+        regEXT = /\.(\w+)$/; //后缀2~4
     /**
      * 获取真实url
      * 来自massframework
