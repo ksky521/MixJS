@@ -55,7 +55,7 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 > callback：回调函数
 
 例如：    
-    MixJS.use('testLazy',function(){alert('success and over');});
+    MixJS.use('testLazy', function(){alert('success and over');});
 
     MixJS.use('testLazy,testModules/testA',function(){
         $.testLazy();
@@ -66,6 +66,21 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
     });
 
 * 注意：`MixJS.use` 不得在模块定义中使用，否则报错；`MixJS.use` 会先加载preload内容，然后在加载模块
+
+### 模块别名 MixJS.alias
+
+ * MixJS.alias(name[, realurl])
+
+> name：模块名称，模块别名引用的名称
+
+> realurl：模块真实的url地址，假如为空，则返回别名的真实url
+
+例如：    
+    MixJS.alias('h-css', '../test/h1.css');
+
+    MixJS.use('h-css,testModules/testA',function(){        
+        alert('success');
+    })
 
 ## MixJS引入方式
 
@@ -104,20 +119,6 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 
 nodejs上线打包工具
 
-## 版本库地址
-
-支持三种访问协议：
-
-* HTTP协议： `https://ksky521@github.com/ksky521/MixJS.git` 。
-* Git协议： `git://github.com/ksky521/MixJS.git` 。
-* SSH协议： `ssh://git@github.com:ksky521/MixJS.git` 。
-
-## 克隆版本库
-
-操作示例：
-
-    $ git clone git://github.com/ksky521/MixJS.git
-	
 ## 联系方式
 
 作者博客：[js8.in](http://js8.in)
