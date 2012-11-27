@@ -94,7 +94,7 @@
                     ext = arr[1],
                     url = arr[0];
 
-                if(!defined(v)) {
+                if(!defined(v) || (ext==='css' && _filesMap[url]===3)) {
                     temp.push(v);
                     
                    
@@ -106,14 +106,14 @@
                         if(temp.length === 0) {
                             var t = function() {
 
-                                    if(defined(v)) {
+                                    if(defined(v) || ext==='css') {
 
                                         callback(self);
 
                                     } else {
                                         var q = Queue.useCallback[v];
                                         q = q ? q : (Queue.useCallback[v] = new Queue(v));
-
+                                        // console.log(q);
                                         q.push(arguments.callee);
 
                                     }
@@ -122,7 +122,8 @@
                             temp = null;
                         }
                     };
-                    loadJS(url, cb);
+                    // console.log(arr);
+                    ext==='css'?loadCSS(url,cb):loadJS(url, cb);
                 }
 
             });
@@ -400,12 +401,12 @@
         if(regAlias.test(url) && alias[url]){
             ret = alias[url];
         }else if(regProtocol.test(url)) { //如果用户路径包含协议
-            ret = url
+            ret = url;
         } else {
             var tmp = url.charAt(0),
                 _2 = url.slice(0, 2);
 
-            if(tmp !== '.' && tmp != '/') { //相对于根路径
+            if(tmp !== '.' && tmp !== '/') { //相对于根路径
                 ret = root + '/' + url;
             } else if(_2 === './') { //相对于兄弟路径
                 ret = root + '/' + url.substr(2);
