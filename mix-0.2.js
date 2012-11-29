@@ -92,10 +92,11 @@
             each(names, function(v) {
                 var arr = getPath(v),
                     ext = arr[1],
+                    moduleId = arr[2],
                     url = arr[0];
-
-                if(!defined(v) || (ext==='css' && _filesMap[url]===3)) {
-                    temp.push(v);
+                    
+                if(!defined(moduleId) || (ext==='css' && _filesMap[url]===3)) {
+                    temp.push(moduleId);
                     
                    
                     var cb = function() {
@@ -105,14 +106,14 @@
 
                         if(temp.length === 0) {
                             var t = function() {
-
-                                    if(defined(v) || ext==='css') {
+                                    
+                                    if(defined(moduleId) || ext==='css') {
 
                                         callback(self);
 
                                     } else {
-                                        var q = Queue.useCallback[v];
-                                        q = q ? q : (Queue.useCallback[v] = new Queue(v));
+                                        var q = Queue.useCallback[moduleId];
+                                        q = q ? q : (Queue.useCallback[moduleId] = new Queue(moduleId));
                                         // console.log(q);
                                         q.push(arguments.callee);
 
@@ -426,8 +427,11 @@
 
         root = root || config.path;
         root = root.substr(0, root.lastIndexOf('/'));
+        id = url;//模块id
+
         if(regAlias.test(url) && alias[url]){
             ret = alias[url];
+
         }else if(regProtocol.test(url)) { //如果用户路径包含协议
             ret = url;
         } else {
@@ -437,14 +441,17 @@
             if(tmp !== '.' && tmp !== '/') { //相对于根路径
                 ret = root + '/' + url;
             } else if(_2 === './') { //相对于兄弟路径
-                ret = root + '/' + url.substr(2);
+                id = url.substr(2);
+                ret = root + '/' + id;
             } else if(_2 === '..') { //相对于父路径
-                var arr = root.replace(/\/$/, '').split('/');
+                // var arr = root.replace(/\/$/, '').split('/');
+                var arr = root.split('/');
                 regRelative.lastIndex = 0;
                 tmp = url.replace(regRelative, function() {
                     arr.pop();
                     return '';
                 });
+                id = tmp;
                 ret = arr.join('/') + '/' + tmp;
             }
         }
@@ -457,7 +464,7 @@
         if(ext !== 'css' && tmp === ret && !regISJS.test(ret)) { //如果没有后缀名会补上.js
             ret += '.js';
         }
-        return [ret, ext];
+        return [ret, ext, id];
     }
 
     /**
@@ -591,7 +598,7 @@
         $.isFunction(callback) && jsCallback(node, callback, fail);
 
         node.charset = charset;
-        node.async = 'async';
+        // node.async = 'async';
         node.src = url;
         HEAD.insertBefore(node, BASEELEMENT);
         return $;

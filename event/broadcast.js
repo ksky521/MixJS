@@ -51,7 +51,7 @@ MixJS.define('event/broadcast',function($){
          * @param  {[type]}   scope    回调函数上下文
          * @return {[type]}            this
          */
-        subscribe:function(types, callback, scope){
+        on:function(types, callback, scope){
             types = types || [];
             var args = [].slice.call(arguments);
 
@@ -76,7 +76,7 @@ MixJS.define('event/broadcast',function($){
          * @param  {Function} callback 假如传入则移出传入的监控事件，否则移出全部
          * @return {[type]}            [description]
          */
-        unsubscribe:function(type, callback, scope){
+        un:function(type, callback, scope){
             var listeners = _cache[type];
             if (!listeners) {
                 return this;
@@ -98,23 +98,7 @@ MixJS.define('event/broadcast',function($){
             }
             return this;
         },
-        /**
-         * 订阅别名
-         * @return {[type]} [description]
-         */
-        on:function(){
-            return this.subscribe.apply(this,arguments);
-        },
-        /**
-         * 退订别名
-         * @return {[type]} [description]
-         */
-        un:function(){
-            return this.unsubscribe.apply(this,arguments);
-        },
-        dispatch:function(){
-            return this.fire.apply(this,arguments);
-        },
+        
         
         removeAll:function(){
             _cache = {};
