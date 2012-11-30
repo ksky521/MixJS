@@ -1,0 +1,83 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+    <h1>test deferred</h1>
+    <script type="text/javascript" src="../mix-0.2.js" name="$" debug="true"></script>
+    <button id="done">done</button>
+    <button id="then">then</button>
+    <button id="thenWithDelay">then with delay</button>
+    <button id="when">when</button>
+    <script type="text/javascript">
+    var h = location.href;
+    $.config({path:h});
+    function byid(id){
+        return document.getElementById(id);
+    }
+    $.use('../Deferred', function($){
+        function fn1(){
+            console.log('fn1');
+        }
+        function fn2(){
+            console.log('fn2');
+        }
+        function fn3(n){
+            console.log(n+' fn3 '+n);
+        }
+        var deferred = $.Deferred();
+        deferred.done([fn1,fn2], fn3, [fn2, fn1]).done(function(n){
+            console.log(n+' game over');
+        });
+        byid('done').onclick = function(){
+            deferred.resolve('test');
+        }
+
+        ///====>then        
+        byid('then').onclick = function(){
+            var test = delay(2000);
+            test(' test then').then(function(a){
+                console.log('then then:'+ a);
+                return 'from return'
+            }).done(function(a){
+                console.log('then done:'+a);
+            });
+        }
+        byid('thenWithDelay').onclick = function(){
+            var test = delay(1000);
+            var test2 = delay(2000);
+            test('test 1000').then(function(){
+                console.log('time 1000');
+                return test2(' delay 2000');
+
+            }).then(function(){
+                console.log('time 3000');
+                return 'then 3';
+            }).done(function(a){
+                console.log('last:'+a);
+            });
+        }
+        ///====>when
+        byid('when').onclick = function(){
+            var test1 = delay(1000);
+            var test2 = delay(4000);
+            $.when(test1('test1'), test2('test 2')).then(function(a,b){
+                console.log(a,b);
+            });
+        }
+    })
+
+    function delay(ms){
+        return function(obj){
+            var promise = $.Deferred();
+            setTimeout(function(){
+                promise.resolve(obj);
+            }, ms);
+            return promise;
+        };
+    }
+    </script>
+</body>
+</html>
