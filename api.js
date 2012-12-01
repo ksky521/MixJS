@@ -1,4 +1,4 @@
-MixJS.define('api','Deferred', function($) {
+MixJS.define('api', function($) {
 	var APIS = {};
 	//初始化获取api的xhr对象
 	var xhr, xhrfns = [function() {

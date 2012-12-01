@@ -143,6 +143,39 @@ nodejs上线打包工具，可以查找依赖关系，例如处理下面的代�
 
 详见packageTool/README.md
 
+## 延迟队列模块：MixJS.Deferred
+
+此模块是延迟队列，提供符合CommonJS的Promise/A标准的promise方法
+
+### MixJS.when
+
+详见：test/deferred.html
+
+### MixJS.Deferred().promise
+
+详见：test/deferred.html
+
+## 开放平台api模块：MixJS.api
+
+此模块是开放平台模块，主要用于开放平台api包装，方便接口开放，此模块依赖Deferred模块
+
+### api设置：MixJS.api.config()
+
+示例：
+
+    $.api.config('sleep', {url:'sleep.php', type:'get', charset:'utf-8', dataType:'json'});
+    $.api.config('sleep');//return config
+
+### api执行：MixJS.api(name, data);
+
+示例：
+
+    $.api('sleep',{time:2}).done(function(data){
+        console.log('success',data);
+    }).fail(function(data){
+        console.log('fail',data);
+    });
+
 ## 联系方式
 
 作者博客：[js8.in](http://js8.in)
