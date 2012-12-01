@@ -559,7 +559,7 @@
         $.isFunction(callback) && jsCallback(node, callback, fail);
 
         node.charset = charset;
-        // node.async = 'async';
+        node.async = true;
         node.src = url;
         HEAD.insertBefore(node, BASEELEMENT);
         return $;
