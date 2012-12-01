@@ -109,7 +109,7 @@
                                     
                                     if(defined(moduleId) || ext==='css') {
 
-                                        callback(self);
+                                        $.isFunction(callback) && callback(self);
 
                                     } else {
                                         var q = Queue.useCallback[moduleId];
@@ -535,46 +535,7 @@
     }
 
 
-    /**
-     * 加载js，css文件通用方法
-     * @param  {[type]}   url      [description]
-     * @param  {Function} callback [description]
-     * @param  {[type]}   fail     [description]
-     * @param  {[type]}   charset  [description]
-     * @return {[type]}            [description]
-     */
 
-    function load(url, callback, fail, charset) {
-        if($.isArray(url)) {
-            var queue = [],
-                cb = function() {
-                    var file = queue.shift();
-
-                    if(queue.length === 0) {
-                        callback();
-                    }
-                }
-            each(url, function(v, i) {
-
-                queue.push(v);
-                _load(v, cb, fail, charset);
-            })
-        } else {
-            _load(url, callback, fail, charset);
-        }
-        return $;
-        // regISCSS.test(url) ? loadCSS(url, callback):loadJS(url, callback, fail, charset);
-    }
-
-    function _load(url, callback, fail, charset) {
-        var arr = getPath(url),
-            url = arr[0];
-        if(arr[1] === 'css') {
-            loadCSS(url, callback)
-        } else {
-            loadJS(url, callback, fail, charset);
-        }
-    }
     /**
      * 加载js
      * @param  {[type]}   url      [description]
