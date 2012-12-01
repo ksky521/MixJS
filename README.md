@@ -5,7 +5,7 @@ MixJS
 
 MixJS还在开发阶段。。。。
 
-0.1开发完成了，不得不承认0.1的确有点乱，所以整理了思绪。。。开始0.2的开发计划
+0.2开发完成，现在开发基于0.2模块的开放平台部分代码，主要包括：Deferred（延迟队列）、API（API接口调用）、Widget（小组件）和XDomain（跨域）
 
 * 模块加载不是单纯的文件加载，需要根据模块规范来写模块哦~
 
@@ -155,18 +155,18 @@ nodejs上线打包工具，可以查找依赖关系，例如处理下面的代�
 
 详见：test/deferred.html
 
-## 开放平台api模块：MixJS.api
+## 开放平台api模块：MixJS.API
 
 此模块是开放平台模块，主要用于开放平台api包装，方便接口开放，此模块依赖Deferred模块
 
-### api设置：MixJS.api.config()
+### api设置：MixJS.API.config()
 
 示例：
 
-    $.api.config('sleep', {url:'sleep.php', type:'get', charset:'utf-8', dataType:'json'});
-    $.api.config('sleep');//return config
+    $.API.config('sleep', {url:'sleep.php', type:'get', charset:'utf-8', dataType:'json'});
+    $.API.config('sleep');//return config
 
-### api执行：MixJS.api(name, data);
+### api执行：MixJS.API(name, data);
 
 示例：
 
@@ -175,6 +175,10 @@ nodejs上线打包工具，可以查找依赖关系，例如处理下面的代�
     }).fail(function(data){
         console.log('fail',data);
     });
+
+## Widget模块：MixJS.Widget
+
+提供开放平台widget模块定义，优雅的模块接口调用，开发中
 
 ## 联系方式
 

@@ -14,9 +14,9 @@
     function byid(id){
         return document.getElementById(id);
     }
-    $.use('../api', function($){
-        $.api.config('sleep',{url:'sleep.php'});
-        $.api('sleep',{time:2}).done(function(data){
+    $.use('../API', function($){
+        $.API.config('sleep',{url:'sleep.php'});
+        $.API('sleep',{time:2}).done(function(data){
             console.log('success',data);
         }).fail(function(data){
             console.log('fail',data);

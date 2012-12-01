@@ -1,0 +1,3 @@
+MixJS.define('Widget', function($){
+	
+});
