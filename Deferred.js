@@ -6,7 +6,8 @@
 MixJS.define('Deferred', function($, undefined) {
 	var emptyArr = [];
 
-	var getQueue = function() {
+	var getQueue = function(once) {
+		once = $.isBoolean(once)?once : true;
 			var list = [];
 			var queue = {
 				//添加
@@ -43,7 +44,7 @@ MixJS.define('Deferred', function($, undefined) {
 						}, queue)
 					}
 
-					return queue.disable();
+					return once?queue.disable():this;
 				},
 				disable: function() {
 					list = undefined;
