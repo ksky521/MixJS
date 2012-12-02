@@ -6,8 +6,7 @@
 MixJS.define('Deferred', function($, undefined) {
 	var emptyArr = [];
 
-	var getQueue = function(once) {
-			once = once || false;
+	var getQueue = function() {
 			var list = [];
 			var queue = {
 				//添加
@@ -133,6 +132,7 @@ MixJS.define('Deferred', function($, undefined) {
 		return emptyArr.slice.call(a);
 	}
 	$.mix($, {
+		getQueue:getQueue,//队列
 		// Deferred helper
 		when: function(subordinate /* , ..., subordinateN */ ) {
 			var i = 0,
