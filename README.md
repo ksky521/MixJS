@@ -178,7 +178,42 @@ nodejs上线打包工具，可以查找依赖关系，例如处理下面的代�
 
 ## Widget模块：MixJS.Widget
 
-提供开放平台widget模块定义，优雅的模块接口调用，开发中
+提供开放平台widget模块定义，优雅的模块接口调用，此处的只是提出一个widget方案，但是需要实际使用时进一步完善，比如loginRequired参数为true时，怎么处理登录问题
+
+widget的js文件放在MixJS根目录的 `widget` 文件夹中
+
+### widget定义：MixJS.Widget.define(name, opt)
+
+示例：
+
+    MixJS.Widget.define('test',{
+        js:['http://lib.sinaapp.com/js/jquery/1.4.2/jquery.min.js'],
+        main:function(opt){
+            console.log('arguments',opt);
+            console.log(this);
+            this.fireSuccess('test widget success fire');
+            this.fireCallback('test widget callback fire');
+        }
+    })
+    MixJS.Widget.define('invite',{
+       js:[],//依赖js
+       css:[],//依赖css样式表
+       loginRequired: true,//是否需要登录后操作
+       main: function(){}//主体函数，接收opt对象，this为promise的widget，包括了onSuccess、onCallback等事件
+       //可以执行fireCallback,fireCallbackWith,fireSuccess,fireFail方法
+    })
+
+### widget调用：MixJS.Widget(name, opt)
+
+示例：
+    var invite = MixJS.Widget('invite', {appkey:'',appid:''}).onSuccess().onError().onCallback();
+    invite.show();
+
+    MixJS.Widget('test', 'i am test\'s opt').onSuccess(function(){
+        console.log(arguments);
+    }).onCallback(function(){
+        console.log(arguments);
+    }).show()
 
 ## 联系方式
 
