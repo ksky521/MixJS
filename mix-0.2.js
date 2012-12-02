@@ -607,12 +607,12 @@
      * @return {[type]}            [description]
      */
 
-    function loadCSS(url, callback) {
+    function loadCSS(url, callback, fail) {
         var node = DOC.createElement('link');
         node.rel = 'stylesheet';
         node.type = "text/css";
 
-        $.isFunction(callback) && cssCallback(node, callback);
+        cssCallback(node, callback, fail);
 
         node.href = url;
         HEAD.insertBefore(node, BASEELEMENT);
@@ -630,16 +630,22 @@
     //  - https://developer.mozilla.org/en/HTML/Element/link#Stylesheet_load_events
     var isOldFirefox = UA.indexOf('Firefox') > 0 && !('onload' in DOC.createElement('link'));
     var cssCallback = (isOldWebKit || isOldFirefox) ?
-    function(node, callback) {
+    function(node, callback, fail) {
+        $.isFunction(callback) && 
         setTimeout(function() {
             poll(node, callback)
         }, 1) // Begin after node insertion
-    } : function(node, callback) {
-        node.onload = node.onerror = function() {
+    } : function(node, callback, fail) {
+        $.isFunction(callback) && (node.onload = function() {
             node.onload = node.onerror = null
             node = undefined
             callback()
-        }
+        });
+        $.isFunction(fail) && (node.onerror = function(){
+            node.onload = node.onerror = null
+            node = undefined
+            fail()
+        });
     }
 
     function poll(node, callback) {
