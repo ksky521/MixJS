@@ -1,0 +1,31 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title>test Widget</title>
+</head>
+<body>
+    <h1>test Widget</h1>
+    <script type="text/javascript" src="../mix-0.2.js" name="$" debug="true"></script>
+    <script type="text/javascript" src="../Deferred.js" name="$" debug="true"></script>
+    <script type="text/javascript" src="../Widget.js" name="$" debug="true"></script>
+    <button id="test">运行widget test</button>
+
+    <script type="text/javascript">
+    var h = location.href;
+    $.config({path:h});
+    function byid(id){
+        return document.getElementById(id);
+    }
+    byid('test').onclick = function(){
+        MixJS.Widget('test', 'i am test\'s opt').onSuccess(function(){
+            console.log(arguments);
+        }).onCallback(function(){
+            console.log(arguments);
+        }).show()
+    }
+
+    
+    </script>
+</body>
+</html>

@@ -14,10 +14,13 @@
  */
 MixJS.define('Widget', 'Deferred', function($) {
 	var widgets = {}; //widgets集合
+	var _loadWidgetFiles = {}; //加载过的widget文件
+
 	/**
 	 * 注册widget
 	 * @return {[type]} [description]
 	 */
+
 	function define(name, opt) {
 		if(typeof name === 'object') {
 			opt = name;
@@ -29,7 +32,7 @@ MixJS.define('Widget', 'Deferred', function($) {
 				//如果只有name参数，则认为是获取
 				return widgets[name];
 			} else if(widgets[name]) {
-				throw = new Error('Widget.define: widget named ' + name + ' is already exist!');
+				throw new Error('Widget.define: widget named ' + name + ' is already exist!');
 				return $;
 			}
 
@@ -49,20 +52,35 @@ MixJS.define('Widget', 'Deferred', function($) {
 	 */
 
 	function widget(name, opt) {
-		if($.isString(name)) {
+		if(!$.isString(name)) {
 			//名称必须为string类型
 			throw new Error('Widget name must a string');
 			return;
 		}
-		if(!widgets[name]) {
-			//检测是否存在
-			throw new Error('Widget:' + name + ' is undefined!');
-			return;
-		}
-		var wgConfig = widgets[name];
+
 		var config = opt || {};
 		var callbacks = $.getQueue(); //oncallback回调函数集合
 		var defer = $.Deferred();
+		var loadPromise;
+		if(!widgets[name]) {
+			//检测是否存在
+			//不存在就加载下
+			loadPromise = $.Deferred();
+
+			$.loadJS($.path + '/widget/' + name + '.js', function() {
+				loadPromise.resolve(name + ' loaded');
+
+			}, function() {
+				var errorMsg = 'widget ' + name + ' load error';
+				throw new Error(errorMsg);
+				loadPromise.reject(errorMsg);
+				fail(errorMsg);
+			})
+
+		}
+
+
+
 		var self = defer.promise({
 
 			//销毁函数
@@ -84,7 +102,12 @@ MixJS.define('Widget', 'Deferred', function($) {
 				return self;
 			},
 			show: function() {
-				load();
+				if(loadPromise && loadPromise['@THEO'] === 'promise') {
+					loadPromise.then(load);
+				} else {
+					load();
+				}
+				return self;
 			}
 		});
 		self.onSuccess = defer.success
@@ -92,54 +115,85 @@ MixJS.define('Widget', 'Deferred', function($) {
 		self.fireSuccess = defer.resolve
 		self.fireFail = defer.reject;
 
-		var mainFn = wgConfig.main;
+
 		//初始化
 
-
 		function init() {
+			var mainFn = widgets[name].main;
+			widgets[name]._status = 'loaded'
 			if($.isFunction(mainFn)) {
 				mainFn.call(self, opt);
 			}
 		}
 
 		function load() {
+			var wgConfig = widgets[name];
 			if(wgConfig.loginRequired) {
 				//判断是否登录，此处未完成！
 			}
-			
+
 			//加载依赖的js和css文件
 			var len;
-			var js = $.isArray(wgConfig.js) ? wgConfig.js || [];
-			var css = $.isArray(wgConfig.css) ? wgConfig.css || [];
+			var js = $.isArray(wgConfig.js) ? wgConfig.js : [];
+			var css = $.isArray(wgConfig.css) ? wgConfig.css : [];
 			len = js.length + css.length;
-			$.each(js, function(v) {
-				$.loadJS(v, cb, function() {
-					fail(v + ' is loaded fail!');
-				});
-			})
-			$.each(css, function(v, i) {
-				$.loadCSS(v, cb, function() {
-					fail(v + ' is loaded fail!');
-				});
-			}, $);
-
-			function cb() {
-				if(--len === 0) {
-					init();
+			if(len > 0 && wgConfig._status!=='loaded') {
+				var cb = function() {
+					if(--len === 0) {
+						init();
+					}
 				}
+				wgConfig._status = 'pending';
+				$.each(js, function(v) {
+					if(_loadWidgetFiles[v] === 1) {
+						cb();
+					} else {
+						$.loadJS(v, function() {
+							_loadWidgetFiles[v] = 1;
+							cb();
+						}, function() {
+							fail(v + ' is loaded fail!');
+						});
+					}
+
+				})
+				$.each(css, function(v) {
+					if(_loadWidgetFiles[v] === 1) {
+						cb();
+					} else {
+						$.loadCSS(v, function() {
+							_loadWidgetFiles[v] = 1;
+							cb();
+						}, function() {
+							fail(v + ' is loaded fail!');
+						});
+					}
+				}, $);
+
+
+			} else {
+				init();
 			}
+
 
 		}
 
 
-		
 
 		function fail(msg) {
-			self.reject(msg);
+			defer.reject(msg);
 		}
 		return self;
 	}
-	widget.all = function
+	widget.all = function() {
+		var back = [];
+		for(var i in widgets) {
+			if(widgets.hasOwnProperty(i)) {
+				back.push(i);
+			}
+		}
+		return back.join(',');
+	}
 	widget.define = define
 	return widget;
 });

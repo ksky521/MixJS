@@ -61,6 +61,7 @@
         _modulesMap = {}; //1：定义之前 2：等待依赖关系中 3：定义完成
     var $ = {
         VERSION: VERSION,
+        path:PATH,
         /**
          * 别名机制
          * @param  {String} name 名字

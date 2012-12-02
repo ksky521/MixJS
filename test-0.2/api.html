@@ -2,10 +2,10 @@
 <html lang="en-US">
 <head>
     <meta charset="UTF-8">
-    <title></title>
+    <title>test API</title>
 </head>
 <body>
-    <h1>test deferred</h1>
+    <h1>test API</h1>
     <script type="text/javascript" src="../mix-0.2.js" name="$" debug="true"></script>
     <script type="text/javascript" src="../Deferred.js" name="$" debug="true"></script>
     <script type="text/javascript">
@@ -22,7 +22,7 @@
         }).fail(function(data){
             console.log('fail',data);
         });
-        
+
         $.when($.API('sleep',{time:3}),$.API('sleep',{time:4}))
         .done(function(data1,data2){
             console.log('when success',data1,data2);
