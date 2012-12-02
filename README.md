@@ -101,7 +101,8 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 ## MixJS 其他方法
 
 除此之外提供了：  
-
+    
+    MixJS.path：mix.js根目录路径
     MixJS.noConflict：命名冲突，返回MixJS对象
     MixJS.loaded：判断一个文件是否加载
 	MixJS.defined：判断模块是否定义
@@ -145,19 +146,25 @@ nodejs上线打包工具，可以查找依赖关系，例如处理下面的代�
 
 ## 延迟队列模块：MixJS.Deferred
 
+模块文件：`Deferred.js`
+
 此模块是延迟队列，提供符合CommonJS的Promise/A标准的promise方法
 
-### MixJS.when
+### 多队列聚合方法：MixJS.when
 
 详见：test/deferred.html
 
-### MixJS.Deferred().promise
+### promise方法：MixJS.Deferred().promise
 
 详见：test/deferred.html
 
 ## 开放平台api模块：MixJS.API
 
+模块文件：`API.js`
+
 此模块是开放平台模块，主要用于开放平台api包装，方便接口开放，此模块依赖Deferred模块
+
+api模块在实际开放平台中，可能涉及到跨域问题（除非你是同域名下的开放平台），解决方案可以参考XDomain模块，本模块未考虑跨域通信问题
 
 ### api设置：MixJS.API.config()
 
@@ -177,6 +184,8 @@ nodejs上线打包工具，可以查找依赖关系，例如处理下面的代�
     });
 
 ## Widget模块：MixJS.Widget
+
+模块文件：`Widget.js`
 
 提供开放平台widget模块定义，优雅的模块接口调用，此处的只是提出一个widget方案，但是需要实际使用时进一步完善，比如loginRequired参数为true时，怎么处理登录问题
 
@@ -206,14 +215,44 @@ widget的js文件放在MixJS根目录的 `widget` 文件夹中
 ### widget调用：MixJS.Widget(name, opt)
 
 示例：
+
     var invite = MixJS.Widget('invite', {appkey:'',appid:''}).onSuccess().onError().onCallback();
     invite.show();
-
     MixJS.Widget('test', 'i am test\'s opt').onSuccess(function(){
         console.log(arguments);
     }).onCallback(function(){
         console.log(arguments);
     }).show()
+    invite.destroy();//销毁
+
+## 跨域模块：MixJS.XDomain
+
+模块文件：`XDomain.js`
+
+此模块是通过html5 postMessage和window.name来实现跨域，跨域方法研究见slideshare：[那些年，我们一起跨过域](http://www.slideshare.net/ksky521/ss-13232998)，slideshare被墙，可以访问[微盘](http://vdisk.weibo.com/s/6wt-O)
+
+### 初始化：MixJS.XDomain.init(opt)
+
+详细使用方法见：`test-0.2/xdomain.html`，注意需要部署到不同域名下
+
+示例：
+    
+    //demo.com页面iframe进来client.html
+    MixJS.XDomain.init({node:document.getElementById('iframeA').contentWindow, origin: '*'})
+    .add(function(a){
+        document.getElementById('info').innerHTML += '<br>'+'time '+(new Date)+' 收到消息：'+a;
+    });
+    //demo2.com页面（被跨域）client.html
+    MixJS.XDomain.init({node:window.parent, origin: '*'})
+    .add(function(a){
+        document.getElementById('info').innerHTML += '<br>'+'time '+(new Date)+' 收到消息：'+a;
+    });
+
+### 发送消息：MixJS.XDomain.send(data)
+
+示例：
+    
+    MixJS.XDomain.send(val);
 
 ## 联系方式
 
