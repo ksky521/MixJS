@@ -7,7 +7,7 @@
  * 	css:[],//依赖css样式表
  * 	loginRequired: true,//是否需要登录后操作
  * 	main: function(){}//主体函数，接收opt对象，this为promise的widget，包括了onSuccess、onCallback等事件
- * 	//可以执行fireCallback,fireCallbackWith,fireSuccess,fireFail方法
+ *  //可以执行fireCallback,fireCallbackWith,fireSuccess,fireFail方法
  * })
  *
  * $.Widget('invite', {appkey:'',appid:''}).onSuccess().onError().onCallback();
@@ -33,7 +33,6 @@ MixJS.define('Widget', 'Deferred', function($) {
 				return widgets[name];
 			} else if(widgets[name]) {
 				throw new Error('Widget.define: widget named ' + name + ' is already exist!');
-				return $;
 			}
 
 			widgets[name] = opt;
@@ -55,7 +54,6 @@ MixJS.define('Widget', 'Deferred', function($) {
 		if(!$.isString(name)) {
 			//名称必须为string类型
 			throw new Error('Widget name must a string');
-			return;
 		}
 
 		var config = opt || {};
@@ -72,9 +70,10 @@ MixJS.define('Widget', 'Deferred', function($) {
 
 			}, function() {
 				var errorMsg = 'widget ' + name + ' load error';
-				throw new Error(errorMsg);
+				
 				loadPromise.reject(errorMsg);
 				fail(errorMsg);
+				throw new Error(errorMsg);
 			})
 
 		}

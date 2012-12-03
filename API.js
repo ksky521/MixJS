@@ -38,7 +38,13 @@ MixJS.define('API', 'Deferred', function($) {
 					url:opt
 				}
 			}
-			return opt && opt.url !== '' ? (APIS[name] = opt, $) : APIS[name];
+			if(opt && opt.url!==''){
+				APIS[name] = opt;
+				return $;
+			}else{
+				return APIS[name];
+			}
+			
 
 		} else if(typeof name === 'object') {
 			APIS = $.mix(APIS, name);
@@ -51,7 +57,6 @@ MixJS.define('API', 'Deferred', function($) {
 
 		if($.isUndefined(opt) || opt.url === '') {
 			throw new Error('api不存在,或者url为空');
-			return $;
 		}
 		data = data || '';
 		var i;
@@ -121,7 +126,7 @@ MixJS.define('API', 'Deferred', function($) {
 						arr.push(i + '=' + data[i]);
 					}
 					url += arr.join('&');
-				} else if($isString(data)) {
+				} else if($.isString(data)) {
 					url += data;
 				}
 			}
@@ -134,14 +139,13 @@ MixJS.define('API', 'Deferred', function($) {
 		}
 
 		function clear() {
-			for(i in http) {
+			for(var i in http) {
 				if(http.hasOwnProperty(i)) {
 					delete http[i];
 				}
 			}
 			http = null;
 			defer = null;
-			clear = null;
 		}
 		return http;
 	}
