@@ -134,7 +134,6 @@
         define: function(name, deps, factory) {
             if(!$.isString(name)) {
                 throw new Error('MixJS.define: name 必须为字符串');
-                return;
             }
             if($.isFunction(deps)) {
                 factory = deps;
@@ -195,7 +194,7 @@
 
     //释放到window
     global[MixJSName] = $;
-    MixJSName !== 'MixJS' && (global['MixJS'] = $);
+    MixJSName !== 'MixJS' && (global.MixJS = $);
 
     /**
      * 判断模块是否定义
@@ -272,7 +271,6 @@
             
             if(m===module){
                 throw new Error(module + '： 发现循环依赖');
-                break;
             }
             if(obj[m] === 1) {
                 //简单去重，不能保证二次依赖去重复

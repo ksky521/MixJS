@@ -73,7 +73,7 @@ MixJS.define('event/wait', function($) {
 					handlers: [],
 					//待处理的uuid
 					data: '',
-					state: 0,
+					state: 0
 				};
 
 				(this.uuid2Evts[uuid] = this.uuid2Evts[uuid] || []).push(e);
