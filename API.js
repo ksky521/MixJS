@@ -67,50 +67,24 @@ MixJS.define('API', 'Deferred', function($) {
 		var timer, timeout = APIS.timeout || 3E4; //30秒过期
 		var dataType = opt.dataType || data.dataType || 'json';
 		var defer = $.Deferred();
+		
 
-		defer.promise(http);
 		var responseTypes = {
 			xml: 'responseXML',
 			json: 'responseText'
 		}
-
-		// 设定状态变换时的事件
-		http.onreadystatechange = function() {
-			if(http.readyState == 4) {
-				var status = http.status | 0;
-
-				http.onreadystatechange = null;
-				clearTimeout(timer);
-
-				if(status === 200) {
-					var text = http[responseTypes[dataType.toLowerCase()]];
-					http.resolve(text);
-				} else {
-
-					var statusText = '请求失败 ';
-					try {
-						statusText = http.statusText;
-					} catch(e) {}
-					statusText += '，http状态码:'+status;
-					http.reject(statusText);
-				}
-				
-				setTimeout(function() {
-					clear();
-				}, 0);
-			}
-		}
-
+		
 		//设置头
 		if(typeof opt.headers === 'object') {
 			for(i in opt.headers) {
 				http.setRequestHeader(i, opt.headers[i]);
 			}
 		}
+
 		timer = setTimeout(function() {
 			http.abort();
 			//timeout
-			http.reject(url + ' timeout');
+			defer.reject(url + ' timeout');
 			setTimeout(function() {
 				clear();
 			}, 0);
@@ -130,6 +104,7 @@ MixJS.define('API', 'Deferred', function($) {
 					url += data;
 				}
 			}
+
 			http.open('GET', url, true);
 			http.send(null)
 		} else {
@@ -137,17 +112,49 @@ MixJS.define('API', 'Deferred', function($) {
 			http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded; charset=' + charset);
 			http.send(data)
 		}
+		
+		var callback = function() {
+			if(http.readyState == 4) {
+				var status = http.status | 0;
 
+				http.onreadystatechange = function(){};
+				timer && clearTimeout(timer);
+
+				if(status === 200 || status === 304) {
+					var text = http[responseTypes[dataType.toLowerCase()]];
+					defer.resolve(text);
+				} else {
+
+					var statusText = '请求失败 ';
+					try {
+						statusText = http.statusText;
+					} catch(e) {}
+					statusText += '，http状态码:'+status;
+					defer.reject(statusText);
+				}
+				
+				setTimeout(clear, 0);
+			}
+		}
+		// 设定状态变换时的事件
+		if(http.readyState == 4){
+			setTimeout(callback, 0);
+		}else{
+			http.onreadystatechange = callback;
+		}
+		
 		function clear() {
-			for(var i in http) {
-				if(http.hasOwnProperty(i)) {
-					delete http[i];
+			for(var i in defer) {
+				if(defer.hasOwnProperty(i)) {
+					delete defer[i];
 				}
 			}
+
 			http = null;
 			defer = null;
 		}
-		return http;
+
+		return defer;
 	}
 	api.config = config;
 

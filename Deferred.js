@@ -134,8 +134,9 @@ MixJS.define('Deferred', function($, undefined) {
         return emptyArr.slice.call(a);
     }
     $.mix($, {
-        getQueue: getQueue,
+
         //队列
+        getQueue: getQueue,
         // Deferred helper
         when: function(subordinate /* , ..., subordinateN */ ) {
             var i = 0,

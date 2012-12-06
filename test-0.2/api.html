@@ -17,18 +17,20 @@
     $.use('../API', function($){
         $.API.config('sleep',{url:'sleep.php'});
 
-        $.API('sleep',{time:2}).done(function(data){
-            console.log('success',data);
+        $.API('sleep',{time:2,r:+new Date}).done(function(data){
+            alert('success:'+data);
         }).fail(function(data){
             console.log('fail',data);
         });
-
-        $.when($.API('sleep',{time:3}),$.API('sleep',{time:4}))
+        
+        $.when($.API('sleep',{time:3,r:+new Date}),$.API('sleep',{time:4}))
         .done(function(data1,data2){
-            console.log('when success',data1,data2);
+            alert('success:'+data1+'data2:'+data2);
+            
         }).fail(function(data){
             console.log('when fail',data);
         });
+
     })
 
     
