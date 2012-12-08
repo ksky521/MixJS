@@ -280,7 +280,7 @@ MixJS.XDomain.init({node:window.parent, origin: '*'})
 示例：
     
 ```javascript
-    MixJS.XDomain.send(val);
+MixJS.XDomain.send(val);
 ```
 <hr/>
 
