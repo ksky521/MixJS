@@ -1,5 +1,5 @@
 MixJS
-=====
+=============
 
 轻量级前端模块化解决方案，提供模块管理、php实时合并、打包工具等方案。可以用于提供给第三方开发者使用的小组件，核心文件可以单独拿出来作为框架core，在此基础上可以开发出一整套的前端框架
 
@@ -10,6 +10,8 @@ MixJS还在开发完善阶段，未作完整兼容性测试，多数代码是出
 0.2开发完成，现在开发基于0.2模块的开放平台部分代码，主要包括：Deferred（延迟队列）、API（API接口调用）、Widget（小组件）和XDomain（跨域）
 
 * 模块加载不是单纯的文件加载，需要根据模块规范来写模块哦~
+
+<hr/>
 
 ## MixJS模块编写规范
 
@@ -27,14 +29,16 @@ MixJS还在开发完善阶段，未作完整兼容性测试，多数代码是出
 
 例如：
 
-    MixJS.define('testModules/testA',['testModules/testB','testModules/testC'],function($){
-        $.log('test A loaded','fire testB testC');
-        $.testModules.testB();
-        $.testModules.testC();
-        return function(){
-            $.log('i am testA');
-        };
-    })
+```javascript
+MixJS.define('testModules/testA',['testModules/testB','testModules/testC'],function($){
+    $.log('test A loaded','fire testB testC');
+    $.testModules.testB();
+    $.testModules.testC();
+    return function(){
+        $.log('i am testA');
+    };
+})
+```
 
 推荐一个模块为一个文件，再次强调模块：文件定义严格按照下面的规范：
 
@@ -44,7 +48,7 @@ MixJS还在开发完善阶段，未作完整兼容性测试，多数代码是出
 
 #### 为什么这样做？
 
-MixJS中define过程实际是一个创建命名空间的过程，所以第一个参数 `moduleName` 是个命名空间的范畴，所以用 `/` 间隔，这样有利于相同模块分到同一父模块，这样模块的划分和文件夹结构就形成一一映射关系，例如：`MixJS.array.forEach` 和 `MixJS.array.indexOf` 同属于 `MixJS.array`，并且分别定义在于 `array` 文件夹下的 `forEach.js` 和 `indexOf.js` 中。
+MixJS中`define`过程实际是一个创建命名空间的过程，所以第一个参数 `moduleName` 是个命名空间的范畴，所以用 `/` 间隔，这样有利于相同模块分到同一父模块，这样模块的划分和文件夹结构就形成一一映射关系，例如：`MixJS.array.forEach` 和 `MixJS.array.indexOf` 同属于 `MixJS.array`，并且分别定义在于 `array` 文件夹下的 `forEach.js` 和 `indexOf.js` 中。
 
 另外统一的规范，有利于文件重复加载的判断。
 
@@ -58,14 +62,16 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 
 例如： 
 
-    MixJS.use('testLazy', function(){alert('success and over');});
-    MixJS.use('testLazy,testModules/testA',function(){
-        $.testLazy();
-        alert('success 1');
-    }).use('testLazy,testModules/testB',function(){
-        $.testModules.testB();
-        alert('success 2');
-    });
+```javascript
+MixJS.use('testLazy', function(){alert('success and over');});
+MixJS.use('testLazy,testModules/testA',function(){
+    $.testLazy();
+    alert('success 1');
+}).use('testLazy,testModules/testB',function(){
+    $.testModules.testB();
+    alert('success 2');
+});
+```
 
 * 注意：`MixJS.use` 不得在模块定义中使用，否则报错；`MixJS.use` 会先加载preload内容，然后在加载模块
 
@@ -79,14 +85,18 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 
 例如： 
 
-    MixJS.alias('h-css', '../test/h1.css');
-    MixJS.use('h-css,testModules/testA',function(){        
-        alert('success');
-    })
+```javascript
+MixJS.alias('h-css', '../test/h1.css');
+MixJS.use('h-css,testModules/testA',function(){        
+    alert('success');
+})
+```
 
 ## MixJS引入方式
 
-	<script type="text/javascript" src="mix.js" name="$" debug="true"></script>
+```html
+<script type="text/javascript" src="mix.js" name="$" debug="true"></script>
+```
 
 > name：MixJS的全局名称，默认是MixJS
 
@@ -94,11 +104,13 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 
 ## 配置
 
-	MixJS.config({
-		path: '路径，否则以MixJS的url为准',
-		debug: true,
-		charset: '模块js编码'
-	});
+```javascript
+MixJS.config({
+	path: '路径，否则以MixJS的url为准',
+	debug: true,
+	charset: '模块js编码'
+});
+```
 
 ## MixJS 其他方法
 
@@ -128,23 +140,27 @@ MixJS中define过程实际是一个创建命名空间的过程，所以第一个
 
 nodejs上线打包工具，可以查找依赖关系，例如处理下面的代码：
 
-    MixJS.define('mod/A', ['mod/B', 'mod/C'], function($){
-        return {};
-    })
+```javascript
+MixJS.define('mod/A', ['mod/B', 'mod/C'], function($){
+    return {};
+})
+```
 
 处理后：
 
-    MixJS.define('mod/B', function($){
-        //
-    });
-    MixJS.define('mod/C', function($){
-        //
-    });
-    MixJS.define('mod/A', function($){
-        return {};
-    })
+```javascript
+MixJS.define('mod/B', function($){
+    //
+});
+MixJS.define('mod/C', function($){
+    //
+});
+MixJS.define('mod/A', function($){
+    return {};
+})
+```
 
-详见packageTool/README.md
+详见 `packageTool/README.md`
 
 ## 延迟队列模块：MixJS.Deferred
 
@@ -172,18 +188,21 @@ api模块在实际开放平台中，可能涉及到跨域问题（除非你是�
 
 示例：
 
-    $.API.config('sleep', {url:'sleep.php', type:'get', charset:'utf-8', dataType:'json'});
-    $.API.config('sleep');//return config
-
+```javascript
+$.API.config('sleep', {url:'sleep.php', type:'get', charset:'utf-8', dataType:'json'});
+$.API.config('sleep');//return config
+```
 ### api执行：MixJS.API(name, data);
 
 示例：
 
-    $.api('sleep',{time:2}).done(function(data){
-        console.log('success',data);
-    }).fail(function(data){
-        console.log('fail',data);
-    });
+```javascript
+$.api('sleep',{time:2}).done(function(data){
+    console.log('success',data);
+}).fail(function(data){
+    console.log('fail',data);
+});
+```
 
 ## Widget模块：MixJS.Widget
 
@@ -197,35 +216,39 @@ widget的js文件放在MixJS根目录的 `widget` 文件夹中
 
 示例：
 
-    MixJS.Widget.define('test',{
-        js:['http://lib.sinaapp.com/js/jquery/1.4.2/jquery.min.js'],
-        main:function(opt){
-            console.log('arguments',opt);
-            console.log(this);
-            this.fireSuccess('test widget success fire');
-            this.fireCallback('test widget callback fire');
-        }
-    })
-    MixJS.Widget.define('invite',{
-       js:[],//依赖js
-       css:[],//依赖css样式表
-       loginRequired: true,//是否需要登录后操作
-       main: function(){}//主体函数，接收opt对象，this为promise的widget，包括了onSuccess、onCallback等事件
-       //可以执行fireCallback,fireCallbackWith,fireSuccess,fireFail方法
-    })
+```javascript
+MixJS.Widget.define('test',{
+    js:['http://lib.sinaapp.com/js/jquery/1.4.2/jquery.min.js'],
+    main:function(opt){
+        console.log('arguments',opt);
+        console.log(this);
+        this.fireSuccess('test widget success fire');
+        this.fireCallback('test widget callback fire');
+    }
+})
+MixJS.Widget.define('invite',{
+   js:[],//依赖js
+   css:[],//依赖css样式表
+   loginRequired: true,//是否需要登录后操作
+   main: function(){}//主体函数，接收opt对象，this为promise的widget，包括了onSuccess、onCallback等事件
+   //可以执行fireCallback,fireCallbackWith,fireSuccess,fireFail方法
+})
+```
 
 ### widget调用：MixJS.Widget(name, opt)
 
 示例：
 
-    var invite = MixJS.Widget('invite', {appkey:'',appid:''}).onSuccess().onError().onCallback();
-    invite.show();
-    MixJS.Widget('test', 'i am test\'s opt').onSuccess(function(){
-        console.log(arguments);
-    }).onCallback(function(){
-        console.log(arguments);
-    }).show()
-    invite.destroy();//销毁
+```javascript
+var invite = MixJS.Widget('invite', {appkey:'',appid:''}).onSuccess().onError().onCallback();
+invite.show();
+MixJS.Widget('test', 'i am test\'s opt').onSuccess(function(){
+    console.log(arguments);
+}).onCallback(function(){
+    console.log(arguments);
+}).show()
+invite.destroy();//销毁
+```
 
 ## 跨域模块：MixJS.XDomain
 
@@ -238,23 +261,28 @@ widget的js文件放在MixJS根目录的 `widget` 文件夹中
 详细使用方法见：`test-0.2/xdomain.html`，注意需要部署到不同域名下
 
 示例：
-    
-    //demo.com页面iframe进来client.html
-    MixJS.XDomain.init({node:document.getElementById('iframeA').contentWindow, origin: '*'})
-    .add(function(a){
-        document.getElementById('info').innerHTML += '<br>'+'time '+(new Date)+' 收到消息：'+a;
-    });
-    //demo2.com页面（被跨域）client.html
-    MixJS.XDomain.init({node:window.parent, origin: '*'})
-    .add(function(a){
-        document.getElementById('info').innerHTML += '<br>'+'time '+(new Date)+' 收到消息：'+a;
-    });
+
+```javascript    
+//demo.com页面iframe进来client.html
+MixJS.XDomain.init({node:document.getElementById('iframeA').contentWindow, origin: '*'})
+.add(function(a){
+    document.getElementById('info').innerHTML += '<br>'+'time '+(new Date)+' 收到消息：'+a;
+});
+//demo2.com页面（被跨域）client.html
+MixJS.XDomain.init({node:window.parent, origin: '*'})
+.add(function(a){
+    document.getElementById('info').innerHTML += '<br>'+'time '+(new Date)+' 收到消息：'+a;
+});
+```
 
 ### 发送消息：MixJS.XDomain.send(data)
 
 示例：
     
+```javascript
     MixJS.XDomain.send(val);
+```
+<hr/>
 
 ## 联系方式
 
