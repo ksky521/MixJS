@@ -170,11 +170,11 @@ MixJS.define('mod/A', function($){
 
 ### 多队列聚合方法：MixJS.when
 
-详见：test/deferred.html
+详见：`test/deferred.html`
 
 ### promise方法：MixJS.Deferred().promise
 
-详见：test/deferred.html
+详见：`test/deferred.html`
 
 ## 开放平台api模块：MixJS.API
 
