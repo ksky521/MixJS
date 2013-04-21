@@ -174,6 +174,7 @@
          * @return {Boolean}     是否加载完成
          */
         loaded: function(path) {
+            path = getPath(path)[0];
             return _.status(path) === 'loaded';
         },
         /**
@@ -238,18 +239,18 @@
                     if (!done && (e.type === 'load' || regJSLoad.test(script.readyState))) {
                         done = 1;
                         removeNode(script);
+                        mapLoaded[src] = 'loaded';
                         callback();
                         complete('load');
-                        mapLoaded[src] = 'loaded';
                     }
                 };
             }
             if ($.isFunction(fail)) {
                 script.onerror = function() {
                     done = true;
+                    mapLoaded[src] = 'error';
                     fail();
                     complete('error');
-                    mapLoaded[src] = 'error';
                 };
             }
             timeout = Number(timeout) ? timeout : defaultConfig.timeout;
@@ -257,8 +258,8 @@
                 setTimeout(function() {
                     if (!done) {
                         done = true;
-                        complete('timeout');
                         mapLoaded[src] = 'timeout';
+                        complete('timeout');
                     }
                 }, timeout);
             }
@@ -307,20 +308,20 @@
                 cb = function() {
                     if (!done) {
                         done = true;
-                        removeNode(link);
+                        link.onload = link.onerror = link.onreadystatechange = null;
+                        mapLoaded[href] = 'loaded';
                         callback();
                         complete('load');
-                        mapLoaded[href] = 'loaded';
                     }
                 }
             }
             if ($.isFunction(fail)) {
                 err = function() {
                     done = true;
-                    removeNode(link);
+                    link.onload = link.onerror = link.onreadystatechange = null;
+                    mapLoaded[href] = 'error';
                     fail();
                     complete('error');
-                    mapLoaded[href] = 'error';
                 }
             }
 
@@ -329,8 +330,8 @@
                 setTimeout(function() {
                     if (!done) {
                         done = true;
-                        complete('timeout');
                         mapLoaded[href] = 'timeout';
+                        complete('timeout');
                     }
                 }, timeout);
             }
@@ -457,8 +458,13 @@
         canDefine: function() {
             var arr = this.undef;
             var len = arr.length;
+            var temp;
             while (len--) {
-                if (!defined(arr[len])) {
+                temp = arr[len];
+                if (!defined(temp)) {
+                    if(regIsCSS.test(temp) && !_.loaded(temp)){
+                        continue;
+                    }
                     return false;
                 }
             }
@@ -730,10 +736,10 @@
         node.onload = node.onerror = node.onreadystatechange = null;
         if (node.parentNode) {
             setTimeout(function() {
-                head.removeChild(node);
+                node.parentNode.removeChild(node);
+                node = null;
             }, 0);
         }
-        node = undefined;
     }
     /**
      * 获取类型
