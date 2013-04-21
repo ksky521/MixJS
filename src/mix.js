@@ -2,6 +2,7 @@
 (function(window, document, undefined) {
     'use strict';
     var setTimeout = window.setTimeout;
+    var emptyFn = function() {};
     var cleanObj = {};
     var emptyArr = [];
     var head = document.head || document.getElementsByTagName('head')[0] || document.documentElement;
@@ -21,7 +22,7 @@
         node.getAttribute('src', 4);
         return url.substr(0, url.lastIndexOf('/')) + '/';
     })(curScriptNode);
-    var UA = navigate.userAgent;
+    var UA = navigator.userAgent;
     var reg = /[^, ]+/g;
     //协议
     var regProtocol = /^(\w+)(\d)?:.*/;
@@ -57,10 +58,10 @@
     var cssCallback = (isOldWebKit || isOldFirefox) ? function(node, callback) {
             // Begin after node insertion
             if ($.isFunction(callback)) {
-
+                pollCount = 0;
                 setTimeout(function() {
                     poll(node, callback);
-                }, 1);
+                }, 50);
             }
         } : function(node, callback, fail) {
             if ($.isFunction(callback)) {
@@ -86,7 +87,7 @@
         };
     }
     $.isObject = function(obj) {
-        return typeof obj === 'Object';
+        return typeof obj === 'object';
     }
 
     $.isBoolean = function(obj) {
@@ -161,6 +162,7 @@
          */
         config: function(cfg) {
             if ($.isObject(cfg)) {
+
                 mix(defaultConfig, cfg);
                 return this;
             }
@@ -198,10 +200,8 @@
             } else if ($.isObject(name)) {
                 realpath = name.path;
                 name = name;
-                return _.alias(name, realpath);
-
+                _.alias(name, realpath);
             }
-            return mapAlias;
         },
         /**
          * 加载js
@@ -232,7 +232,7 @@
             }
             var urls = getPath(src);
             src = script.src = urls[0];
-
+            complete = $.isFunction(complete) ? complete : emptyFn;
             if ($.isFunction(callback)) {
                 script.onload = script.onreadystatechange = function(e) {
                     if (!done && (e.type === 'load' || regJSLoad.test(script.readyState))) {
@@ -252,8 +252,7 @@
                     mapLoaded[src] = 'error';
                 };
             }
-
-            timeout = Nubmer(timeout) ? timeout : defaultConfig.timeout;
+            timeout = Number(timeout) ? timeout : defaultConfig.timeout;
             if (timeout) {
                 setTimeout(function() {
                     if (!done) {
@@ -293,11 +292,12 @@
                 removeNode(link);
             };
             var err = cb;
-            timeout = Nubmer(timeout) ? timeout : defaultConfig.timeout;
+            timeout = Number(timeout) ? timeout : defaultConfig.timeout;
             var url = getPath(href);
             href = link.href = url[0];
             link.rel = 'stylesheet';
             link.type = 'text/css';
+            complete = $.isFunction(complete) ? complete : emptyFn;
             if ($.isObject(attrs)) {
                 for (var i in attrs) {
                     link.setAttribute(i, attrs[i]);
@@ -343,7 +343,9 @@
     };
 
 
-
+    if ($.isUndefined(window.define)) {
+        window.define = _.define;
+    }
     window.MixJS = mix(_, $);
     //已经定义模块的状态表：undefined|pending|defined
     var mapDefined = {};
@@ -372,8 +374,7 @@
             factory = deps;
             deps = emptyArr;
         }
-
-        this.id = id;
+        this.id = id ? getPath(id)[2] : id;
         this.status = 'uninitialized';
         if ($.isString(deps)) {
             deps = deps.split(',');
@@ -382,17 +383,18 @@
         this.factory = factory;
         this.root = root || window; //默认挂靠在window全局，使用_，默认挂靠到MixJS上
         this.undef = []; //没有定义的模块
-        mapDefined[id] = 'uninitialized';
+        this.id && (mapDefined[this.id] = 'uninitialized');
         this.checkDependencies(deps);
         this.define();
     }
     Module.prototype = {
         //定义
         define: function() {
-            if (this.canDefined()) {
+            if (this.canDefine()) {
                 this.namespace();
             } else if (this.status !== 'pending') {
-                mapDefined[this.id] = this.status = 'pending';
+                this.status = 'pending';
+                this.id && (mapDefined[this.id] = this.status);
                 this.loadDeps();
             }
         },
@@ -400,32 +402,19 @@
         namespace: function() {
             var names = $.isString(this.id) ? this.id.split('/') : emptyArr;
             var root = this.root;
-            var name;
+            var name, lastName;
             while (name = names.shift()) {
+                lastName = name;
                 if (names.length) {
-                    root = (root[name] = root[name] || {});
+                    root = root[name];
                 }
             }
-            this.callback(root[name]);
-            this.destroy();
-            //解决掉触发调用模块的promise
-            _.each(mapDeps2ModulePromise[this.id], function(v) {
-                if (isPromise(v)) {
-                    v.resolve();
-                }
-            });
-
-        },
-        //执行回调
-        callback: function(obj) {
             try {
                 var f = $.isFunction(this.factory) && this.factory.apply(this.root, this.getArgs());
                 if (f) {
                     f.amd = 'THEO'; //加个尾巴~
-                    if ($.isObject(obj)) {
-                        (obj = f);
-                    }
-                    mapDefined[this.id] = 'defined';
+                    root[lastName] = f;
+                    this.id && (mapDefined[this.id] = 'defined');
                 }
             } catch (e) {
                 if (this.id) {
@@ -433,6 +422,15 @@
                 }
                 throw new Error('Module.namespace error:id=>' + this.id + ',info=>' + e.message);
             }
+            //解决掉触发调用模块的promise
+            if (this.id && $.isArray(mapDeps2ModulePromise[this.id])) {
+                _.each(mapDeps2ModulePromise[this.id], function(v) {
+                    if (isPromise(v)) {
+                        v.resolve();
+                    }
+                });
+            }
+            this.destroy();
         },
         //根据模块名称，获取模块
         getFn: function(names) {
@@ -474,7 +472,9 @@
             _.each(modules, function(v) {
                 promise = new Promise();
                 mapDeps2ModulePromise[v] = mapDeps2ModulePromise[v] ? mapDeps2ModulePromise[v] : [];
-                mapDeps2ModulePromise[v].push(promise.done(self.define));
+                mapDeps2ModulePromise[v].push(promise.done(function() {
+                    self.define();
+                }));
                 if (mapDefined[v] !== 'pending') {
 
                     var alias = _.alias(v);
@@ -482,7 +482,9 @@
                         //如果存在alias
                         var p = new Promise();
 
-                        p.done(self.define);
+                        p.done(function() {
+                            self.define()
+                        });
                         //如果是普通js和css
                         //不支持有依赖关系的alias模块类型的js
                         var len = alias.length;
@@ -506,7 +508,9 @@
                             }
                         });
                     } else if (regIsCSS.test(v)) {
-                        _.loadCSS(v, self.define);
+                        _.loadCSS(v, function() {
+                            self.define();
+                        });
                     } else {
                         _.loadJS(v);
                     }
@@ -517,6 +521,7 @@
         checkDependencies: function(deps) {
             var self = this;
             _.each(deps, function(v) {
+                v = getPath(v)[2];
                 if (!defined(v)) {
                     self.undef.push(v);
                 }
@@ -554,7 +559,7 @@
      */
 
     function Promise() {
-        this.state = 'unfulfilled'; //fulfilled|failed
+        this.status = 'unfulfilled'; //fulfilled|failed
         this.fulfilledHandlers = [];
         this.errorHandlers = [];
         this.progressHandlers = [];
@@ -567,7 +572,7 @@
             }
             this.reason = arg;
             this.status = 'failed';
-            return this.fire(this.fulfilledHandlers, arg);
+            return this.fire(this.errorHandlers, arg);
         },
         isResolved: function() {
             return this.status === 'fulfilled';
@@ -578,7 +583,7 @@
             }
             this.reason = arg;
             this.status = 'fulfilled';
-            return this.fire(this.errorHandlers, arg);
+            return this.fire(this.fulfilledHandlers, arg);
         },
         fail: function(handler) {
             return this.then(undefined, handler);
@@ -587,7 +592,7 @@
             return this.then(undefined, undefined, handler);
         },
         then: function(fulfilledHandler, errorHandler, progressHandler) {
-            switch (this.state) {
+            switch (this.status) {
                 case 'unfulfilled':
                     this.add(fulfilledHandler, 'fulfilled');
                     this.add(errorHandler, 'error');
@@ -650,12 +655,12 @@
 
     function destroy(obj) {
         for (var i in obj) {
-            if (obj.hasOwnProperty(i)) {
+            if (obj.hasOwnProperty(i) && obj[i]) {
                 if ($.isArray(obj[i])) {
                     obj[i].length = 0;
                 }
-                if ($.isFunction(obj.destroy)) {
-                    obj.destroy();
+                if ($.isFunction(obj[i].destroy)) {
+                    obj[i].destroy();
                 }
                 delete obj[i];
             }
@@ -772,9 +777,16 @@
         }
         return target;
     }
+    var pollCount = 0; //最大200次
 
     function poll(node, callback) {
         var done = false;
+        pollCount++;
+        if (pollCount > 200) {
+            callback();
+            done = true;
+            return;
+        }
         // for WebKit < 536
         if (isOldWebKit) {
             if (node.sheet) {
@@ -804,6 +816,6 @@
             } else {
                 poll(node, callback);
             }
-        }, 1)
+        }, 50)
     }
 }(window, document));
