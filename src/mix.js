@@ -195,8 +195,7 @@
                 if ($.isUndefined(realpath)) {
                     return mapAlias[name];
                 }
-                mapAlias[name] = realpath;
-                return this;
+                mapAlias[name] = String(realpath).split(',');
             } else if ($.isObject(name)) {
                 realpath = name.path;
                 name = name;
@@ -469,7 +468,8 @@
                 }));
                 if (mapDefined[v] !== 'pending') {
                     var alias = _.alias(v);
-                    if (alias) {
+                    
+                    if (alias && alias.length) {
                         //如果存在alias
                         var p = new Promise();
 
