@@ -17,6 +17,10 @@
     </script>
     <button onclick="MixJS.use('jquery', function(){console.log(jQuery)})">加载jquery</button>
     <button onclick="MixJS.use('abcss', function(){b();console.log('end');})">alias</button>
-    <buttton onclick="MixJS.use('jq', function(){console.log('end');})">加载远程jq</buttton>
+    <button onclick="MixJS.use('jq', function(){console.log('end');})">加载远程jq</button>
+    <button onclick="MixJS.use('a', function(){console.log('a');})">加载a</button>
+    <button onclick="MixJS.use('a.js', function(){console.log('ab');})">加载a.js</button>
+    <button onclick="MixJS.use('a.css', function(){console.log('acss');})">加载a.css</button>
+    <button onclick="MixJS.use('c', function(){console.log('c');})">加载c</button>
 </body>
 </html>
