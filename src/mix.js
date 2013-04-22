@@ -233,25 +233,21 @@
             var urls = getPath(src);
             src = script.src = urls[0];
             complete = $.isFunction(complete) ? complete : emptyFn;
-            if ($.isFunction(callback)) {
-                script.onload = script.onreadystatechange = function(e) {
-                    if (!done && (e.type === 'load' || regJSLoad.test(script.readyState))) {
-                        done = 1;
-                        removeNode(script);
-                        mapLoaded[src] = 'loaded';
-                        callback();
-                        complete('load');
-                    }
-                };
-            }
-            if ($.isFunction(fail)) {
-                script.onerror = function() {
+            script.onload = script.onreadystatechange = function(e) {
+                if (!done && (e.type === 'load' || regJSLoad.test(script.readyState))) {
                     done = true;
-                    mapLoaded[src] = 'error';
-                    fail();
-                    complete('error');
-                };
-            }
+                    removeNode(script);
+                    mapLoaded[src] = 'loaded';
+                    $.isFunction(callback) && callback();
+                    complete('load');
+                }
+            };
+            script.onerror = function() {
+                done = true;
+                mapLoaded[src] = 'error';
+                $.isFunction(fail) && fail();
+                complete('error');
+            };
             timeout = Number(timeout) ? timeout : defaultConfig.timeout;
             if (timeout) {
                 setTimeout(function() {
@@ -288,10 +284,7 @@
             }
             var link = document.createElement('link');
             var done = false;
-            var cb = function() {
-                removeNode(link);
-            };
-            var err = cb;
+          
             timeout = Number(timeout) ? timeout : defaultConfig.timeout;
             var url = getPath(href);
             href = link.href = url[0];
@@ -303,25 +296,21 @@
                     link.setAttribute(i, attrs[i]);
                 }
             }
-            if ($.isFunction(callback)) {
-                cb = function() {
-                    if (!done) {
-                        done = true;
-                        link.onload = link.onerror = link.onreadystatechange = null;
-                        mapLoaded[href] = 'loaded';
-                        callback();
-                        complete('load');
-                    }
-                }
-            }
-            if ($.isFunction(fail)) {
-                err = function() {
+            var cb = function() {
+                if (!done) {
                     done = true;
                     link.onload = link.onerror = link.onreadystatechange = null;
-                    mapLoaded[href] = 'error';
-                    fail();
-                    complete('error');
+                    mapLoaded[href] = 'loaded';
+                    $.isFunction(callback) && callback();
+                    complete('load');
                 }
+            }
+            var err = function() {
+                done = true;
+                link.onload = link.onerror = link.onreadystatechange = null;
+                mapLoaded[href] = 'error';
+                $.isFunction(fail) && fail();
+                complete('error');
             }
 
             cssCallback(link, cb, err);
@@ -343,10 +332,7 @@
     };
 
 
-    if ($.isUndefined(window.define)) {
-        window.define = _.define;
-    }
-    window.MixJS = mix(_, $);
+
     //已经定义模块的状态表：undefined|pending|defined
     var mapDefined = {};
     //通过依赖找上一级模块的promise
@@ -461,7 +447,7 @@
             while (len--) {
                 temp = arr[len];
                 if (!defined(temp)) {
-                    if (regIsCSS.test(temp) && !_.loaded(temp)) {
+                    if ((regIsCSS.test(temp) || regIsJS.test(temp)) && _.loaded(temp)) {
                         continue;
                     }
                     return false;
@@ -481,7 +467,6 @@
                     self.define();
                 }));
                 if (mapDefined[v] !== 'pending') {
-
                     var alias = _.alias(v);
                     if (alias) {
                         //如果存在alias
@@ -513,10 +498,17 @@
                             }
                         });
                     } else if (regIsCSS.test(v)) {
+                        //css文件
                         _.loadCSS(v, function() {
                             self.define();
                         });
+                    } else if (regIsJS.test(v)) {
+                        //js文件
+                        _.loadJS(v, function(){
+                            self.define();
+                        });
                     } else {
+                        //模块
                         _.loadJS(v);
                     }
                 }
@@ -598,18 +590,18 @@
         },
         then: function(fulfilledHandler, errorHandler, progressHandler) {
             switch (this.status) {
-            case 'unfulfilled':
-                this.add(fulfilledHandler, 'fulfilled');
-                this.add(errorHandler, 'error');
-                this.add(progressHandler, 'progress');
-                break;
-            case 'fulfilled':
-                this.fire(fulfilledHandler, this.reason);
-                this.fire(progressHandler, this.reason);
-                break;
-            case 'failed':
-                this.fire(errorHandler, this.reason);
-                this.fire(progressHandler, this.reason);
+                case 'unfulfilled':
+                    this.add(fulfilledHandler, 'fulfilled');
+                    this.add(errorHandler, 'error');
+                    this.add(progressHandler, 'progress');
+                    break;
+                case 'fulfilled':
+                    this.fire(fulfilledHandler, this.reason);
+                    this.fire(progressHandler, this.reason);
+                    break;
+                case 'failed':
+                    this.fire(errorHandler, this.reason);
+                    this.fire(progressHandler, this.reason);
             }
             return this;
         },
@@ -824,4 +816,9 @@
             }
         }, 50)
     }
-}(this, document));
+
+    if ($.isUndefined(window.define)) {
+        window.define = _.define;
+    }
+    window.MixJS = mix(_, $);
+}(window, document));
