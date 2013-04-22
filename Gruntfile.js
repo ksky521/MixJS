@@ -2,9 +2,25 @@ module.exports = function(grunt) {
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
 		jshint: {
+			options: {
+				indent: 4,
+				asi: true,
+				expr: true,
+				browser: true,
+				strict: true,
+				unused: true,
+				undef: true,
+				loopfunc: false,
+				sub: true,
+				boss: true,
+				eqnull: true
+			},
+
 			files: ['src/mix.js']
 		},
-	
+		jsvalidate: {
+			files: ['src/*.js']
+		},
 		concat: {
 			options: {
 				separator: ';\n'
@@ -18,18 +34,18 @@ module.exports = function(grunt) {
 		},
 		uglify: {
 			options: {
-				banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> by <%= pkg.author %> */\n'
+				banner: '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> by <%= pkg.author %> */\n'
 			},
 			dist: {
 				src: '<%= concat.js.dest %>',
-				dest: 'build/<%= pkg.name %>.<%= pkg.version %>.min.js'
+				dest: 'lib/<%= pkg.name %>.<%= pkg.version %>.min.js'
 			}
 		},
 		watch: {
 			//grunt watch:js|css
 			js: {
 				files: ['src/*.js'],
-				tasks: ['jshint'],
+				tasks: ['jshint', 'jsvalidate'],
 			}
 		}
 
@@ -40,6 +56,8 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-contrib-concat');
+	grunt.loadNpmTasks('grunt-jsvalidate');
 
 	grunt.registerTask('build', ['concat:js', 'uglify']);
+	grunt.registerTask('default', ['jsvalidate','jshint']);
 };

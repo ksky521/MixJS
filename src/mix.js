@@ -1,4 +1,3 @@
-;
 (function(window, document, undefined) {
     'use strict';
     var setTimeout = window.setTimeout;
@@ -91,7 +90,7 @@
     }
 
     $.isBoolean = function(obj) {
-        return obj === true || obj === false || isType(obj, 'Boolean')
+        return obj === true || obj === false || isType(obj, 'Boolean');
     };
 
     $.isUndefined = function(obj) {
@@ -462,7 +461,7 @@
             while (len--) {
                 temp = arr[len];
                 if (!defined(temp)) {
-                    if(regIsCSS.test(temp) && !_.loaded(temp)){
+                    if (regIsCSS.test(temp) && !_.loaded(temp)) {
                         continue;
                     }
                     return false;
@@ -599,17 +598,18 @@
         },
         then: function(fulfilledHandler, errorHandler, progressHandler) {
             switch (this.status) {
-                case 'unfulfilled':
-                    this.add(fulfilledHandler, 'fulfilled');
-                    this.add(errorHandler, 'error');
-                    this.add(progressHandler, 'progress');
-                    break;
-                case 'fulfilled':
-                    this.fire(fulfilledHandler, this.reason);
-                case 'failed':
-                    this.fire(errorHandler, this.reason);
-                default:
-                    this.fire(progressHandler, this.reason);
+            case 'unfulfilled':
+                this.add(fulfilledHandler, 'fulfilled');
+                this.add(errorHandler, 'error');
+                this.add(progressHandler, 'progress');
+                break;
+            case 'fulfilled':
+                this.fire(fulfilledHandler, this.reason);
+                this.fire(progressHandler, this.reason);
+                break;
+            case 'failed':
+                this.fire(errorHandler, this.reason);
+                this.fire(progressHandler, this.reason);
             }
             return this;
         },
@@ -824,4 +824,4 @@
             }
         }, 50)
     }
-}(window, document));
+}(this, document));

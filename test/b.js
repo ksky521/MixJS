@@ -3,6 +3,6 @@ define('b', ['a', 'c'], function(a, c) {
     c();
     d();
     return function() {
-        alert('b test');
+        alert('b finish test');
     }
 });
