@@ -13,6 +13,9 @@
         baseURL:location.href
     });
     MixJS.alias('abcss', ['a.css','b','b.css']);
+    MixJS.alias('jq','http://code.jquery.com/jquery-1.9.1.js');
     </script>
+    <button onclick="MixJS.use('jquery', function(){console.log(jQuery)})">加载jquery</button>
+    <button onclick="MixJS.use('abcss', function(){b();console.log('end');})">alias</button>
 </body>
 </html>

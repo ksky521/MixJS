@@ -374,6 +374,7 @@
         this.define();
     }
     Module.prototype = {
+        constructor: Module,
         //定义
         define: function() {
             if (this.canDefine()) {
@@ -563,6 +564,7 @@
         this.reason = '';
     }
     Promise.prototype = {
+        constructor: Promise,
         reject: function(arg) {
             if (this.status !== 'unfulfilled') {
                 return this;
