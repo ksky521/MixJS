@@ -29,7 +29,7 @@ module.exports = function(grunt) {
 				// the files to concatenate
 				src: ['src/*.js'],
 				// the location of the resulting JS file
-				dest: 'src/<%= pkg.name %>.<%= pkg.version %>.js'
+				dest: '<%= pkg.name %>.<%= pkg.version %>.js'
 			}
 		},
 		uglify: {

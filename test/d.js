@@ -1,5 +1,5 @@
 define('d', function(){
     return function(){
-        alert('d');
+        console.log('d');
     }
 })

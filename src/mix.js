@@ -231,6 +231,7 @@
             }
             var urls = getPath(src);
             src = script.src = urls[0];
+            script.async = true;
             complete = $.isFunction(complete) ? complete : emptyFn;
             script.onload = script.onreadystatechange = function(e) {
                 if (!done && (e.type === 'load' || regJSLoad.test(script.readyState))) {

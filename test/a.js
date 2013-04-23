@@ -1,5 +1,5 @@
 define('./a', function(){
     return function(){
-        alert('a test');
+        console.log('a test');
     }
 });
