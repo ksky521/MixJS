@@ -1,6 +1,6 @@
 MixJS - Just Another Javascript Module Loader
-=============
-    
+=============    
+                                                                                                
     MMMMMMMM               MMMMMMMM  iiii                             JJJJJJJJJJJ   SSSSSSSSSSSSSSS 
     M:::::::M             M:::::::M i::::i                            J:::::::::J SS:::::::::::::::S
     M::::::::M           M::::::::M  iiii                             J:::::::::JS:::::SSSSSS::::::S
@@ -16,7 +16,7 @@ MixJS - Just Another Javascript Module Loader
     M::::::M               M::::::Mi::::::i   x:::::xx:::::xJ:::::::JJJ:::::::J  SSSSSSS     S:::::S
     M::::::M               M::::::Mi::::::i  x:::::x  x:::::xJJ:::::::::::::JJ   S::::::SSSSSS:::::S
     M::::::M               M::::::Mi::::::i x:::::x    x:::::x JJ:::::::::JJ     S:::::::::::::::SS 
-    MMMMMMMM               MMMMMMMMiiiiiiiixxxxxxx      xxxxxxx  JJJJJJJJJ        SSSSSSSSSSSSSSS  
+    MMMMMMMM               MMMMMMMMiiiiiiiixxxxxxx      xxxxxxx  JJJJJJJJJ        SSSSSSSSSSSSSSS   
 
 version: 0.3.0 butterfly
 
