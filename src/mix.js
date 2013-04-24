@@ -545,14 +545,11 @@
 
     /**
      * Promise类
-     * Promise/A实现
      */
-
     function Promise() {
         this.status = 'unfulfilled'; //fulfilled|failed
         this.fulfilledHandlers = [];
         this.errorHandlers = [];
-        this.progressHandlers = [];
         this.reason = '';
     }
     Promise.prototype = {
@@ -579,23 +576,20 @@
         fail: function(handler) {
             return this.then(undefined, handler);
         },
-        complete: function(handler) {
-            return this.then(undefined, undefined, handler);
+        always: function(handler) {
+            return this.then(handler, handler);
         },
-        then: function(fulfilledHandler, errorHandler, progressHandler) {
+        then: function(fulfilledHandler, errorHandler) {
             switch (this.status) {
             case 'unfulfilled':
                 this.add(fulfilledHandler, 'fulfilled');
                 this.add(errorHandler, 'error');
-                this.add(progressHandler, 'progress');
                 break;
             case 'fulfilled':
                 this.fire(fulfilledHandler, this.reason);
-                this.fire(progressHandler, this.reason);
                 break;
             case 'failed':
                 this.fire(errorHandler, this.reason);
-                this.fire(progressHandler, this.reason);
             }
             return this;
         },
@@ -626,7 +620,6 @@
         clear: function() {
             this.fulfilledHandlers.length = 0;
             this.errorHandlers.length = 0;
-            this.progressHandlers.length = 0;
         }
     };
 
