@@ -1,0 +1,7 @@
+@import url('style1.css');
+div{
+    background: green;
+}
+div.red{
+    background: red;
+}

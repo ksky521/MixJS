@@ -1,0 +1,24 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+    <script type="text/javascript" src="../mix-0.2.js" name="$"></script>
+    <script type="text/javascript">
+    var h = location.href;
+    $.config({path:h});
+    </script>
+    <!--script type="text/javascript" src="testLazy.js"></script-->
+    <script type="text/javascript">
+    
+    $.use('mod/withMoreDeps', function(){
+        alert('success and over');
+        $.mod.withMoreDeps();
+    });    
+    
+    </script>
+</body>
+</html>
