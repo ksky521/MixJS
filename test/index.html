@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MixJS Test</title>
+</head>
+<body>
+    <h2 id="a">a.css background:red</h2>
+    <h2 id="b">b.css background:green</h2>
+    <h3 id="blue">blue.php 延时2s的css</h3>
+    <script src="../src/mix.js"></script>
+    <script>
+    MixJS.config({
+        baseURL:location.href
+    });
+    MixJS.alias('abcss', ['a.css','b','b.css','blue.php?a.css']);
+    MixJS.alias('jq','http://code.jquery.com/jquery-1.9.1.js');
+    </script>
+    <button onclick="MixJS.use('jquery', function(){console.log(jQuery)})">加载jquery</button>
+    <button onclick="MixJS.use('abcss', function(){b();console.log('end');})">alias</button>
+    <button onclick="MixJS.use('jq', function(){console.log('end');})">加载远程jq</button>
+    <button onclick="MixJS.use('a', function(){console.log('a');})">加载a</button>
+    <button onclick="MixJS.use('a.js', function(){console.log('ab');})">加载a.js</button>
+    <button onclick="MixJS.use('a.css', function(){console.log('acss');})">加载a.css</button>
+    <button onclick="MixJS.use('c', function(){console.log('c');})">加载c</button>
+</body>
+</html>
