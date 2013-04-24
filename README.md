@@ -20,4 +20,4 @@ MixJS - Just Another Javascript Module Loader
 
 version: 0.3.0 butterfly
 
-Come back soon! 
+Come back soon!!
