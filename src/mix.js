@@ -15,26 +15,15 @@
     })();
     //获取当前文件父路径
     var PATH = (function(node) {
-        var url = node.hasAttribute ? // non-IE6/7
-        node.src :
-        // see http://msdn.microsoft.com/en-us/library/ms536429(VS.85).aspx
-        node.getAttribute('src', 4);
+        var url = node.hasAttribute ? node.src : node.getAttribute('src', 4);
         return url.substr(0, url.lastIndexOf('/')) + '/';
     })(curScriptNode);
     var UA = navigator.userAgent;
-    var reg = /[^, ]+/g;
-    //协议
-    var regProtocol = /^(\w+)(\d)?:.*/;
     //是否为js
     var regIsJS = /\.js$/i;
     //是否为css
     var regIsCSS = /\.css$/i;
-    //相对路径处理
-    var regRelative = /\.\.\//g;
-    //文件后缀2~4
-    var regEXT = /\.(\w+)$/;
-    //jscallback检测
-    var regJSLoad = /loaded|complete|uninitialized/;
+    //alias
     var regAlias = /^[-\w\d_$]{2,}$/i;
     var VERSION = 'MixJS 0.3 butterfly';
     var $ = {};
@@ -75,7 +64,7 @@
             }
         };
     //基本类型判断
-    'Function,String,Array,Number'.replace(reg, function(t) {
+    'Function,String,Array,Number'.replace(/[^, ]+/g, function(t) {
         $['is' + t] = function(s) {
             return isType(s, t);
         }
@@ -232,9 +221,10 @@
             var urls = getPath(src);
             src = script.src = urls[0];
             script.async = true;
+            script.charset = defaultConfig.charset;
             complete = $.isFunction(complete) ? complete : emptyFn;
             script.onload = script.onreadystatechange = function(e) {
-                if (!done && (e.type === 'load' || regJSLoad.test(script.readyState))) {
+                if (!done && (/loaded|complete|undefined/.test(script.readyState))) {
                     done = true;
                     removeNode(script);
                     mapLoaded[src] = 'loaded';
@@ -248,7 +238,7 @@
                 $.isFunction(fail) && fail();
                 complete('error');
             };
-            timeout = Number(timeout) ? timeout : defaultConfig.timeout;
+            timeout = $.isNumber(timeout) ? timeout : defaultConfig.timeout;
             if (timeout) {
                 setTimeout(function() {
                     if (!done) {
@@ -284,8 +274,8 @@
             }
             var link = document.createElement('link');
             var done = false;
-          
-            timeout = Number(timeout) ? timeout : defaultConfig.timeout;
+
+            timeout = $.isNumber(timeout) ? timeout : defaultConfig.timeout;
             var url = getPath(href);
             href = link.href = url[0];
             link.rel = 'stylesheet';
@@ -407,7 +397,7 @@
                 if (this.id) {
                     mapDefined[this.id] = 'error';
                 }
-                throw new Error('Module.namespace error:id=>' + this.id + ',info=>' + e.message);
+                throw new Error('Module.namespace error:id=>' + this.id + ';undef=>' + this.undef.join(',') + ';info=>' + e.message);
             }
             //解决掉触发调用模块的promise
             if (this.id && $.isArray(mapDeps2ModulePromise[this.id])) {
@@ -469,7 +459,7 @@
                 }));
                 if (mapDefined[v] !== 'pending') {
                     var alias = _.alias(v);
-                    
+
                     if (alias && alias.length) {
                         //如果存在alias
                         var p = new Promise();
@@ -506,7 +496,7 @@
                         });
                     } else if (regIsJS.test(v)) {
                         //js文件
-                        _.loadJS(v, function(){
+                        _.loadJS(v, function() {
                             self.define();
                         });
                     } else {
@@ -687,7 +677,7 @@
         if (regAlias.test(url) && alias[url]) {
             ret = alias[url];
 
-        } else if (regProtocol.test(url)) { //如果用户路径包含协议
+        } else if (/^(\w+)(\d)?:.*/.test(url)) { //如果用户路径包含协议
             ret = url;
         } else {
             tmp = url.charAt(0);
@@ -701,8 +691,7 @@
             } else if (_2 === '..') { //相对于父路径
                 // var arr = root.replace(/\/$/, '').split('/');
                 var arr = root.split('/');
-                regRelative.lastIndex = 0;
-                tmp = url.replace(regRelative, function() {
+                tmp = url.replace(/\.\.\//g, function() {
                     arr.pop();
                     return '';
                 });
@@ -713,7 +702,7 @@
 
         var ext = 'js'; //默认是js文件
         tmp = ret.replace(/[?#].*/, '');
-        if (regEXT.test(tmp)) {
+        if (/\.(\w+)$/.test(tmp)) {
             ext = RegExp.$1;
         }
         if (ext !== 'css' && tmp === ret && !regIsJS.test(ret)) { //如果没有后缀名会补上.js
