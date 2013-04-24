@@ -224,7 +224,8 @@
             script.charset = defaultConfig.charset;
             complete = $.isFunction(complete) ? complete : emptyFn;
             script.onload = script.onreadystatechange = function(e) {
-                if (!done && (/loaded|complete|undefined/.test(script.readyState))) {
+                e = e || cleanObj
+                if (!done && (e.type === 'load' || /loaded|complete|undefined/.test(script.readyState))) {
                     done = true;
                     removeNode(script);
                     mapLoaded[src] = 'loaded';
@@ -583,18 +584,18 @@
         },
         then: function(fulfilledHandler, errorHandler, progressHandler) {
             switch (this.status) {
-                case 'unfulfilled':
-                    this.add(fulfilledHandler, 'fulfilled');
-                    this.add(errorHandler, 'error');
-                    this.add(progressHandler, 'progress');
-                    break;
-                case 'fulfilled':
-                    this.fire(fulfilledHandler, this.reason);
-                    this.fire(progressHandler, this.reason);
-                    break;
-                case 'failed':
-                    this.fire(errorHandler, this.reason);
-                    this.fire(progressHandler, this.reason);
+            case 'unfulfilled':
+                this.add(fulfilledHandler, 'fulfilled');
+                this.add(errorHandler, 'error');
+                this.add(progressHandler, 'progress');
+                break;
+            case 'fulfilled':
+                this.fire(fulfilledHandler, this.reason);
+                this.fire(progressHandler, this.reason);
+                break;
+            case 'failed':
+                this.fire(errorHandler, this.reason);
+                this.fire(progressHandler, this.reason);
             }
             return this;
         },
