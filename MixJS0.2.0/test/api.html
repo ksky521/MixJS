@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title>test API</title>
+</head>
+<body>
+    <h1>test API</h1>
+    <script type="text/javascript" src="../mix-0.2.js" name="$" debug="true"></script>
+    <script type="text/javascript" src="../Deferred.js" name="$" debug="true"></script>
+    <script type="text/javascript">
+    var h = location.href;
+    $.config({path:h});
+    function byid(id){
+        return document.getElementById(id);
+    }
+    $.use('../API', function($){
+        $.API.config('sleep',{url:'sleep.php'});
+
+        $.API('sleep',{time:2,r:+new Date}).done(function(data){
+            alert('success:'+data);
+        }).fail(function(data){
+            console.log('fail',data);
+        });
+        
+        $.when($.API('sleep',{time:3,r:+new Date}),$.API('sleep',{time:4}))
+        .done(function(data1,data2){
+            alert('success:'+data1+'data2:'+data2);
+            
+        }).fail(function(data){
+            console.log('when fail',data);
+        });
+
+    })
+
+    
+    </script>
+</body>
+</html>
