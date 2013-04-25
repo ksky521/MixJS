@@ -223,6 +223,7 @@
             var urls = getPath(src);
             src = script.src = urls[0];
             script.async = true;
+            script.type = 'text/javascript';
             script.charset = defaultConfig.charset;
             complete = $.isFunction(complete) ? complete : emptyFn;
             script.onload = script.onreadystatechange = function(e) {
