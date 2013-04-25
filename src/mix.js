@@ -31,7 +31,8 @@
     var mapAlias = {};
     //加载完的文件列表
     var mapLoaded = {};
-
+    //为了保证每个poll的重试次数为300
+    var pollTimers = {};
     ///css load检测来自seajs
     // `onload` event is supported in WebKit since 535.23
     // Ref:
@@ -46,7 +47,8 @@
     var cssCallback = (isOldWebKit || isOldFirefox) ? function(node, callback) {
             // Begin after node insertion
             if ($.isFunction(callback)) {
-                pollCount = 0;
+                //设置timer
+                pollTimers[node.href] = 0;
                 setTimeout(function() {
                     poll(node, callback);
                 }, 50);
@@ -582,8 +584,8 @@
         then: function(fulfilledHandler, errorHandler) {
             switch (this.status) {
             case 'unfulfilled':
-                this.add(fulfilledHandler, 'fulfilled');
-                this.add(errorHandler, 'error');
+                this.add(fulfilledHandler, 'fulfilled')
+                    .add(errorHandler, 'error');
                 break;
             case 'fulfilled':
                 this.fire(fulfilledHandler, this.reason);
@@ -761,12 +763,11 @@
         }
         return target;
     }
-    var pollCount = 0; //最大200次
 
     function poll(node, callback) {
         var done = false;
-        pollCount++;
-        if (pollCount > 200) {
+        var count = pollTimers[node.href]++;
+        if (count > 300) {
             callback();
             done = true;
             return;
