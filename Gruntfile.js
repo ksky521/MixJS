@@ -1,9 +1,24 @@
+var concatArr = [
+	'src/intro.js',
+	'src/getCurrentScript.js',
+	'src/vars.js',
+	'src/typeof.js',
+	'src/browser.js',
+	'src/Module.js',
+	'src/Promise.js',
+	'src/getPath.js',
+	'src/loadjs.js',
+	'src/loadcss.js',
+	'src/core.js',
+	'src/outro.js'];
 module.exports = function(grunt) {
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
 		jshint: {
 			options: {
-				indent: 4,
+				noarg:true, 
+				noempty:true, 
+				curly:true, 
 				asi: true,
 				expr: true,
 				browser: true,
@@ -15,21 +30,26 @@ module.exports = function(grunt) {
 				boss: true,
 				eqnull: true
 			},
-
-			files: ['src/mix.js']
+			files: ['tmp/<%= pkg.name %>.js']
 		},
-		jsvalidate: {
-			files: ['src/*.js']
+		watch: {
+			files: ['src/*.js'],
+			tasks: 'dev'
 		},
 		concat: {
-			options: {
-				separator: ';\n'
+			MixJS: {
+				options: {
+					separator: '\n'
+				},
+				src: concatArr,
+				dest: 'lib/<%= pkg.name %>.<%= pkg.version %>.js'
 			},
-			js: {
-				// the files to concatenate
-				src: ['src/*.js'],
-				// the location of the resulting JS file
-				dest: '<%= pkg.name %>.<%= pkg.version %>.js'
+			dev: {
+				options: {
+					separator: '\n'
+				},
+				src: concatArr,
+				dest: 'tmp/<%= pkg.name %>.js'
 			}
 		},
 		uglify: {
@@ -37,18 +57,10 @@ module.exports = function(grunt) {
 				banner: '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> by <%= pkg.author %> */\n'
 			},
 			dist: {
-				src: '<%= concat.js.dest %>',
+				src: '<%= concat.MixJS.dest %>',
 				dest: 'lib/<%= pkg.name %>.<%= pkg.version %>.min.js'
 			}
-		},
-		watch: {
-			//grunt watch:js|css
-			js: {
-				files: ['src/*.js'],
-				tasks: ['jshint', 'jsvalidate'],
-			}
 		}
-
 	});
 
 	// grunt.loadNpmTasks('grunt-regarde');
@@ -56,8 +68,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-contrib-concat');
-	grunt.loadNpmTasks('grunt-jsvalidate');
 
-	grunt.registerTask('build', ['concat:js', 'uglify']);
-	grunt.registerTask('default', ['jsvalidate','jshint']);
+	grunt.registerTask('build', ['concat:MixJS', 'uglify']);
+	grunt.registerTask('dev', ['concat:dev', 'jshint']);
 };
