@@ -8,7 +8,7 @@ var concatArr = [
 	'src/Promise.js',
 	'src/getPath.js',
 	'src/loadjs.js',
-	'src/loadcss.js',
+	'src/loadcss-img.js',
 	'src/core.js',
 	'src/outro.js'];
 module.exports = function(grunt) {
@@ -54,6 +54,7 @@ module.exports = function(grunt) {
 		},
 		uglify: {
 			options: {
+				sourceMap: 'lib/<%= pkg.name %>.<%= pkg.version %>.map',
 				banner: '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> by <%= pkg.author %> */\n'
 			},
 			dist: {
