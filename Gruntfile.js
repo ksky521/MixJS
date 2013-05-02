@@ -16,9 +16,9 @@ module.exports = function(grunt) {
 		pkg: grunt.file.readJSON('package.json'),
 		jshint: {
 			options: {
-				noarg:true, 
-				noempty:true, 
-				curly:true, 
+				noarg: true,
+				noempty: true,
+				curly: true,
 				asi: true,
 				expr: true,
 				browser: true,
@@ -61,6 +61,19 @@ module.exports = function(grunt) {
 				src: '<%= concat.MixJS.dest %>',
 				dest: 'lib/<%= pkg.name %>.<%= pkg.version %>.min.js'
 			}
+		},
+		compress: {
+			main: {
+				options: {
+					archive: '<%= pkg.name %>.zip'
+				},
+				files: [{
+					expand: true,
+					cwd: 'lib',
+					src: ['**'],
+					filter: 'isFile'
+				}]
+			}
 		}
 	});
 
@@ -69,7 +82,9 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-contrib-concat');
-
+	grunt.loadNpmTasks('grunt-contrib-compress');
+	
 	grunt.registerTask('build', ['concat:MixJS', 'uglify']);
 	grunt.registerTask('dev', ['concat:dev', 'jshint']);
+	
 };
