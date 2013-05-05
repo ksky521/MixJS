@@ -54,11 +54,11 @@ Module.prototype = {
         while (name = names.shift()) {
             lastName = name;
             if (names.length) {
-                root = root[name];
+                root = (root[name] = root[name] || {});
             }
         }
         try {
-            var f = $.isFunction(this.factory) && this.factory.apply(this.root, this.getArgs());
+            var f = $.isFunction(this.factory) && this.factory.apply(window, this.getArgs());
             if (f) {
                 f.amd = 'THEO'; //加个尾巴~
                 root[lastName] = f;
@@ -94,7 +94,7 @@ Module.prototype = {
     getArgs: function() {
         var arr = this.dependencies;
         var v;
-        var fns = [];
+        var fns = [this.root];
         for (var i = 0, len = arr.length; i < len; i++) {
             v = arr[i];
             fns.push(this.getFn(v));

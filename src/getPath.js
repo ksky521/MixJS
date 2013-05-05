@@ -6,7 +6,7 @@
  */
 
 function getPath(url, root) {
-    var ret;
+    var ret = url;
     var tmp;
     var _2;
     var alias = _.alias;
